@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<title>California Voter Guide 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+
+<script>
+(async()=>{
+  const{PlaceAutocompleteElement}=await google.maps.importLibrary('places');
+  window._PlaceAutocompleteElement=PlaceAutocompleteElement;
+})().catch(()=>{});
+</script>
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC5E2-adnG5MnqFWOgNGQQneb8oL3InwW4&loading=async&libraries=places" async defer onload="initPlacesAutocomplete()"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{overflow-x:hidden}
+body{overflow-x:hidden}
+:root{
+  --gold:#C9A84C;--gold-light:#F0D89A;--gold-pale:#FBF5E6;--gold-border:#E8D48A;
+  --navy:#1B2A4A;--navy-mid:#2E4270;--navy-light:#E8EDF5;--navy-faint:#F2F5FB;
+  --text:#0F1D35;--muted:#4A5568;--border:#D9E0EE;
+  --white:#fff;--surface:#F7F9FD;
+  --dem:#2563A8;--dem-bg:#EBF2FB;
+  --rep:#B8311F;--rep-bg:#FAEAE7;
+  --npp:#4A7C4E;--npp-bg:#EBF4EC;
+  --star:#C9A84C;--star-empty:#D9E0EE;
+  --good:#2A7A4A;
+  --radius:8px;
+}
+html,body{font-family:'DM Sans',sans-serif;background:#F0F2F7;color:var(--text);font-size:15px}
+
+/* ── PRINT ── */
+@media print{
+  header,.page-tabs,.ballot-hero,.back-to-top,.no-print,#page-browse,
+  .ballot-quicknav,.races-divider,.section-block,.data-note,
+  .picks-print-note{display:none!important}
+  .print-only{display:flex!important}
+  .print-picks{display:block!important}
+  body,#page-ballot{background:#fff}
+  .ballot-body{padding:0!important}
+  .print-header{display:flex!important}
+}
+.print-only{display:none}
+/* Print picks block - only visible when printing */
+.print-picks{display:none}
+.print-picks-title{font-family:'Playfair Display',serif;font-size:1rem;color:var(--navy);margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--navy)}
+.print-pick-row{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);align-items:baseline;flex-wrap:wrap}
+.print-pick-office{font-size:0.82rem;font-weight:500;color:var(--navy);min-width:160px}
+.print-pick-name{font-size:0.82rem;color:var(--text)}
+.print-pick-detail{font-size:0.76rem;color:var(--muted)}
+.print-no-picks{font-size:0.82rem;color:var(--muted);font-style:italic;padding:8px 0}
+.print-header{display:none;justify-content:space-between;align-items:flex-start;padding-bottom:14px;margin-bottom:18px;border-bottom:2px solid var(--navy)}
+.print-header-title{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--navy)}
+.print-header-sub{font-size:0.7rem;color:var(--muted);margin-top:2px}
+
+/* Google Places autocomplete dropdown styling */
+.pac-container{font-family:'DM Sans',sans-serif;font-size:0.8rem;border:1px solid var(--border);border-radius:5px;box-shadow:0 4px 12px rgba(27,42,74,0.1);margin-top:2px}
+.pac-item{padding:6px 10px;cursor:pointer;color:var(--text)}
+.pac-item:hover{background:var(--navy-light)}
+.pac-item-query{font-size:0.8rem;color:var(--navy)}
+.pac-matched{font-weight:500}
+
+/* ── HEADER ── */
+header{background:var(--navy);color:#fff;padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:56px;border-bottom:3px solid var(--gold);position:sticky;top:0;z-index:300}
+.brand{display:flex;align-items:baseline;gap:10px}
+.brand h1{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:600;letter-spacing:-0.01em}
+.brand span{font-size:0.67rem;color:var(--gold-light);letter-spacing:0.1em;text-transform:uppercase}
+.hdr-right{display:flex;align-items:center;gap:8px}
+.proto{background:var(--gold);color:var(--navy);font-size:0.6rem;font-weight:500;padding:2px 7px;border-radius:3px;letter-spacing:0.06em}
+
+/* ── PAGE TABS ── */
+.page-tabs{background:var(--white);border-bottom:1px solid var(--border);padding:0 2rem;display:flex;position:sticky;top:56px;z-index:200}
+.ptab{padding:10px 18px;font-size:0.8rem;font-weight:500;color:var(--muted);cursor:pointer;border:none;border-bottom:2px solid transparent;background:none;font-family:'DM Sans',sans-serif;transition:all 0.15s}
+.ptab:hover{color:var(--navy)}
+.ptab.active{color:var(--navy);border-bottom-color:var(--gold)}
+
+/* ── PAGES ── */
+.page{display:none}.page.active{display:block}
+
+/* ════════════════════════════════
+   MY BALLOT PAGE
+════════════════════════════════ */
+
+/*
+  Stacks top to bottom: Find My Ballot form → Map → Your Ballot summary.
+  Fixed widths so stable at any screen size.
+  Max-width constrains it on very wide screens so it doesn't sprawl.
+*/
+.ballot-hero{
+  background:var(--white);
+  border:1px solid var(--border);
+  border-top:none;
+  display:flex;
+  flex-direction:column;
+  width:100%;
+  max-width:520px;
+  margin:0 auto;         /* centers on wide screens */
+  overflow:hidden;
+}
+
+/* Section 1: address form */
+.hero-addr{
+  padding:1rem 1.25rem;
+  border-bottom:1px solid var(--border);
+  flex-shrink:0;
+}
+.hero-addr h2{font-family:'Playfair Display',serif;font-size:1rem;color:var(--navy);margin-bottom:3px}
+.hero-addr .sub{font-size:0.71rem;color:var(--muted);line-height:1.45;margin-bottom:10px}
+.addr-row{display:flex;gap:5px;margin-bottom:5px}
+.addr-row input{flex:1;min-width:0;padding:7px 9px;font-size:0.78rem;border:1px solid var(--border);border-radius:5px;font-family:'DM Sans',sans-serif;color:var(--text);transition:border-color 0.15s}
+.addr-row input:focus{outline:none;border-color:var(--navy-mid);box-shadow:0 0 0 2px rgba(46,66,112,0.08)}
+.go-btn{padding:7px 14px;background:var(--navy);color:#fff;border:none;border-radius:5px;font-size:0.76rem;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;flex-shrink:0}
+.go-btn:hover{background:var(--navy-mid)}
+.addr-status{font-size:0.7rem;min-height:16px;color:var(--muted)}
+.addr-status.ok{color:var(--good)}
+.addr-status.err{color:var(--rep)}
+.sample-link{font-size:0.7rem;color:var(--navy-mid);background:none;border:none;cursor:pointer;text-decoration:underline;font-family:'DM Sans',sans-serif;padding:0;margin-top:3px;display:block}
+
+/* District chips */
+.dist-chips{display:none;margin-top:8px;gap:4px;flex-wrap:wrap}
+.dist-chips.show{display:flex}
+.dchip{font-size:0.69rem;padding:3px 9px;border-radius:12px;background:var(--navy-light);color:var(--navy-mid);border:1px solid var(--border);cursor:pointer;transition:all 0.12s}
+.dchip.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+
+/* Section 2: map - fixed pixel height */
+.hero-map{
+  height:240px;
+  flex-shrink:0;
+  position:relative;
+  background:var(--navy-faint);
+  overflow:hidden;
+  border-bottom:1px solid var(--border);
+}
+#mini-map{width:100%;height:100%;display:block}
+.map-pills{position:absolute;top:6px;left:6px;display:flex;gap:3px;flex-wrap:wrap;max-width:calc(100% - 12px)}
+.mpill{font-size:0.63rem;padding:3px 7px;background:rgba(255,255,255,0.93);border:1px solid var(--border);border-radius:3px;cursor:pointer;color:var(--navy-mid);font-family:'DM Sans',sans-serif;transition:all 0.12s;white-space:nowrap}
+.mpill.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.map-label{position:absolute;bottom:5px;left:6px;right:6px;font-size:0.63rem;color:var(--muted);background:rgba(255,255,255,0.88);padding:2px 6px;border-radius:3px;text-align:center;line-height:1.4}
+
+/* Section 3: Your Ballot summary - sits below map */
+.hero-summary{
+  flex-shrink:0;
+  padding:1rem 1.25rem;
+  background:var(--white);
+}
+.summary-top .stitle{font-size:0.65rem;font-weight:500;color:var(--gold);letter-spacing:0.09em;text-transform:uppercase;margin-bottom:7px}
+.ballot-stat{display:flex;justify-content:space-between;align-items:baseline;padding:4px 0;border-bottom:1px solid var(--border)}
+.ballot-stat:last-of-type{border-bottom:none}
+.stat-label{font-size:0.74rem;color:var(--text)}
+.stat-val{font-size:0.8rem;font-weight:500;color:var(--navy)}
+.summary-actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.action-btn{flex:1;min-width:120px;padding:8px 10px;border:none;border-radius:5px;font-size:0.73rem;cursor:pointer;font-family:'DM Sans',sans-serif;text-align:center;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap}
+.action-btn.print{background:var(--navy);color:#fff}
+.action-btn.print:hover{background:var(--navy-mid)}
+.action-btn.share{background:var(--gold-pale);color:var(--navy);border:1px solid var(--gold-border)}
+.action-btn.share:hover{background:var(--gold-light)}
+.share-toast{font-size:0.68rem;color:var(--good);margin-top:4px;min-height:14px}
+
+/* District numbers block inside hero summary - visually separated from stat rows */
+.summary-dist-block{margin-top:8px;padding-top:8px;border-top:1px solid var(--border)}
+.summary-dist-label{font-size:0.63rem;font-weight:500;color:var(--gold);letter-spacing:0.09em;text-transform:uppercase;margin-bottom:5px}
+.summary-dist-row{display:flex;justify-content:space-between;align-items:baseline;padding:3px 0}
+.dist-type{font-size:0.72rem;color:var(--muted)}
+.dist-num{font-size:0.76rem;font-weight:500;color:var(--navy);background:var(--navy-light);padding:1px 7px;border-radius:3px}
+
+/* Mobile: hero goes full width */
+@media(max-width:640px){
+  .ballot-hero{max-width:100%;border-right:none}
+  .hero-map{height:200px}
+}
+
+/* ── BALLOT BODY (full width below hero) ── */
+.ballot-body{padding:1.25rem 1rem 3rem;max-width:1100px;margin:0 auto;min-width:0;overflow-x:hidden}
+@media(max-width:480px){.ballot-body{padding:1rem 0.75rem 3rem}}
+
+/* Welcome */
+.ballot-welcome{text-align:center;padding:3rem 1rem}
+.ballot-welcome .icon{font-size:2.4rem;opacity:0.35;margin-bottom:12px}
+.ballot-welcome h3{font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--navy);margin-bottom:6px}
+.ballot-welcome p{font-size:0.82rem;color:var(--muted);line-height:1.7;max-width:380px;margin:0 auto 16px}
+.ballot-welcome .cta{padding:9px 20px;background:var(--navy);color:#fff;border:none;border-radius:5px;font-size:0.8rem;cursor:pointer;font-family:'DM Sans',sans-serif}
+
+/* Ballot summary box */
+/* Ballot quick-nav - race jump bar above candidates */
+.ballot-quicknav{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;margin-bottom:1rem;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.bqnav-label{font-size:0.65rem;font-weight:500;color:var(--gold);letter-spacing:0.09em;text-transform:uppercase;margin-right:4px;white-space:nowrap}
+.bqnav-btn{padding:4px 11px;font-size:0.73rem;color:var(--muted);border:1px solid var(--border);background:var(--surface);border-radius:4px;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:all 0.12s}
+.bqnav-btn:hover{background:var(--navy-light);color:var(--navy);border-color:var(--navy-light)}
+.bqnav-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+
+/* Section blocks */
+.races-divider{font-size:0.67rem;font-weight:500;color:var(--gold);letter-spacing:0.1em;text-transform:uppercase;padding:1rem 0 0.6rem;border-top:1px solid var(--border);margin-top:0.5rem}
+.races-divider:first-child{border-top:none;margin-top:0;padding-top:0}
+.section-block{margin-bottom:1.5rem}
+.section-hdr{display:flex;flex-direction:column;gap:4px;margin-bottom:0.65rem}
+.section-hdr h3{font-family:'Playfair Display',serif;font-size:1rem;color:var(--navy);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.section-explainer{font-size:0.73rem;color:var(--muted);line-height:1.5;max-width:680px}
+.section-scope{font-size:0.67rem;padding:2px 8px;border-radius:3px;background:var(--navy-light);color:var(--navy-mid);border:1px solid var(--border);white-space:nowrap;display:inline-block}
+
+/* Candidates grid - 2 columns when multiple candidates */
+.candidates-grid{display:grid;gap:0.8rem;width:100%}
+.candidates-grid.multi{grid-template-columns:repeat(auto-fill,minmax(min(420px,100%),1fr))}
+.candidates-grid.single{grid-template-columns:1fr;max-width:680px}
+
+/* CANDIDATE CARD */
+.candidate-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:visible;transition:box-shadow 0.18s,border-color 0.18s;position:relative}
+.candidate-card:hover{box-shadow:0 4px 16px rgba(27,42,74,0.09)}
+.candidate-card.starred{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold-pale)}
+
+.card-header{display:flex;align-items:flex-start;gap:11px;padding:0.85rem 1rem;padding-right:48px;border-bottom:1px solid var(--border)}
+.avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.88rem;font-weight:500;flex-shrink:0;font-family:'Playfair Display',serif}
+.card-name-block{flex:1;min-width:0}
+.cname{font-size:0.92rem;font-weight:500;color:var(--navy);word-break:break-word}
+.incumbent{font-size:0.6rem;background:var(--gold-pale);color:var(--gold);border:1px solid var(--gold-light);padding:1px 6px;border-radius:3px;margin-left:5px;vertical-align:middle;white-space:nowrap}
+.cparty{display:inline-block;font-size:0.67rem;padding:2px 7px;border-radius:3px;margin-top:3px;font-weight:500}
+.p-dem{background:var(--dem-bg);color:var(--dem)}
+.p-rep{background:var(--rep-bg);color:var(--rep)}
+.p-npp{background:var(--npp-bg);color:var(--npp)}
+.crole{font-size:0.73rem;color:var(--muted);margin-top:2px;word-break:break-word}
+
+/* Star button - anchored to card */
+.star-btn{position:absolute;top:10px;right:10px;background:none;border:1px solid var(--star-empty);border-radius:50%;width:30px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all 0.15s;color:var(--star-empty);flex-shrink:0;z-index:1}
+.star-btn:hover{border-color:var(--star);background:var(--gold-pale)}
+.star-btn.on{border-color:var(--star);background:var(--gold-pale);color:var(--star)}
+
+.card-body{padding:0.85rem 1rem}
+/* info-grid: 2 cols on wide cards, 1 col on narrow/mobile */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.85rem}
+@media(max-width:540px){
+  .info-grid{grid-template-columns:1fr}
+}
+.iblock h4{font-size:0.63rem;font-weight:500;letter-spacing:0.09em;text-transform:uppercase;color:var(--gold);margin-bottom:5px}
+.blist{list-style:none;display:flex;flex-direction:column;gap:3px}
+.blist li{font-size:0.76rem;color:var(--text);padding-left:12px;position:relative;line-height:1.4;word-break:break-word}
+.blist li::before{content:'•';position:absolute;left:0;color:var(--gold)}
+.fbar-label{display:flex;justify-content:space-between;font-size:0.69rem;color:var(--muted);margin-bottom:3px;margin-top:5px;flex-wrap:wrap;gap:4px}
+.fbar-track{background:var(--border);border-radius:3px;height:5px}
+.fbar-fill{height:5px;border-radius:3px;background:var(--navy)}
+.dtags{margin-top:5px;display:flex;flex-direction:column;gap:2px}
+.dtag{font-size:0.69rem;background:var(--surface);border:1px solid var(--border);padding:2px 7px;border-radius:4px;color:var(--muted);word-break:break-word}
+
+/* Starred picks banner (print) */
+.picks-print-note{background:var(--gold-pale);border:1px solid var(--gold-border);border-radius:6px;padding:10px 14px;margin-bottom:1.2rem;font-size:0.78rem;color:var(--navy);display:none}
+.picks-print-note.has-picks{display:block}
+
+/* data note */
+.data-note{font-size:0.69rem;color:var(--muted);padding:8px 12px;background:var(--white);border:1px solid var(--border);border-radius:5px;line-height:1.5;margin-top:1.5rem}
+
+/* ════════════════════════════════
+   BROWSE PAGE
+════════════════════════════════ */
+
+/* Browse top nav - wraps naturally, no horizontal scroll */
+.race-topnav{background:var(--white);border-bottom:2px solid var(--border);position:sticky;top:90px;z-index:150;padding:6px 1.25rem 4px}
+.race-topnav-inner{display:flex;flex-wrap:wrap;gap:2px 0;align-items:flex-start}
+/* Each section (Statewide / District) is its own flex row that wraps */
+.rnav-section{display:flex;flex-wrap:wrap;align-items:center;gap:2px;width:100%;padding:2px 0}
+.rnav-section+.rnav-section{border-top:1px solid var(--border);margin-top:2px;padding-top:4px}
+.rnav-divider{font-size:0.62rem;color:var(--gold);letter-spacing:0.08em;text-transform:uppercase;padding:4px 8px 4px 0;white-space:nowrap;flex-shrink:0;align-self:center}
+.rnav-btn{padding:5px 11px;font-size:0.75rem;font-weight:400;color:var(--muted);border:none;background:none;cursor:pointer;border-radius:4px;white-space:nowrap;font-family:'DM Sans',sans-serif;transition:all 0.12s;border-bottom:2px solid transparent}
+.rnav-btn:hover{color:var(--navy);background:var(--surface)}
+.rnav-btn.active{color:var(--navy);background:var(--navy-light);border-bottom-color:var(--gold);font-weight:500}
+
+/* Browse district filter */
+.browse-filter-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 2rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.filter-label{font-size:0.72rem;color:var(--muted);white-space:nowrap}
+.filter-tabs{display:flex;gap:4px;flex-wrap:wrap}
+.ftab{font-size:0.71rem;padding:3px 9px;border-radius:4px;background:var(--white);border:1px solid var(--border);color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif}
+.ftab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.browse-search{margin-left:auto}
+.browse-search input{padding:5px 10px;font-size:0.76rem;border:1px solid var(--border);border-radius:5px;font-family:'DM Sans',sans-serif;color:var(--text);width:180px}
+.browse-search input:focus{outline:none;border-color:var(--navy-mid)}
+
+/* Browse content */
+.browse-body{padding:1.5rem 2rem 4rem;max-width:1100px;margin:0 auto}
+.browse-welcome{text-align:center;padding:3rem 1rem;color:var(--muted)}
+.browse-welcome .icon{font-size:2rem;opacity:0.3;margin-bottom:10px}
+.browse-welcome h3{font-family:'Playfair Display',serif;font-size:1rem;color:var(--navy);margin-bottom:4px}
+.browse-welcome p{font-size:0.8rem;line-height:1.6;max-width:300px;margin:0 auto}
+.browse-panel-hdr{margin-bottom:1rem}
+.browse-panel-hdr h2{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--navy)}
+.browse-panel-hdr .bdesc{font-size:0.74rem;color:var(--muted);margin-top:3px}
+.browse-panel-hdr .bexpl{font-size:0.78rem;color:var(--navy-mid);background:var(--navy-light);border-radius:5px;padding:7px 11px;margin-top:7px;line-height:1.5}
+.browse-district-note{background:var(--navy-light);border-radius:5px;padding:6px 10px;font-size:0.74rem;color:var(--navy-mid);margin-bottom:0.75rem;display:none}
+.browse-district-note.show{display:block}
+.browse-dist-divider{font-size:0.74rem;font-weight:500;color:var(--navy-mid);padding:8px 10px;background:var(--navy-light);border-radius:5px;margin:10px 0 6px}
+
+/* Back to top */
+.back-to-top{position:fixed;bottom:24px;right:24px;background:var(--navy);color:#fff;border:none;border-radius:50%;width:42px;height:42px;cursor:pointer;font-size:16px;z-index:250;box-shadow:0 3px 12px rgba(27,42,74,0.25);display:none;align-items:center;justify-content:center;transition:opacity 0.2s}
+.back-to-top.show{display:flex}
+.back-to-top:hover{background:var(--navy-mid)}
+
+/* Tooltip */
+#ttip{position:fixed;background:var(--navy);color:#fff;padding:5px 9px;border-radius:4px;font-size:0.7rem;pointer-events:none;display:none;z-index:400;white-space:nowrap}
+
+/* Share modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:500;display:none;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:var(--white);border-radius:10px;padding:1.5rem;max-width:440px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.18)}
+.modal h3{font-family:'Playfair Display',serif;font-size:1.05rem;color:var(--navy);margin-bottom:4px}
+.modal p{font-size:0.78rem;color:var(--muted);line-height:1.55;margin-bottom:12px}
+.modal-url{width:100%;padding:8px 10px;font-size:0.75rem;border:1px solid var(--border);border-radius:5px;background:var(--surface);color:var(--text);font-family:'DM Sans',sans-serif;margin-bottom:8px}
+.modal-actions{display:flex;gap:6px}
+.modal-copy{flex:1;padding:8px;background:var(--navy);color:#fff;border:none;border-radius:5px;font-size:0.78rem;cursor:pointer;font-family:'DM Sans',sans-serif}
+.modal-close{padding:8px 14px;background:var(--surface);color:var(--muted);border:1px solid var(--border);border-radius:5px;font-size:0.78rem;cursor:pointer;font-family:'DM Sans',sans-serif}
+.modal-copied{font-size:0.72rem;color:var(--good);margin-top:6px;min-height:16px}
+.picks-preview{margin-top:10px;padding:10px;background:var(--surface);border-radius:5px;border:1px solid var(--border)}
+.picks-preview-title{font-size:0.67rem;font-weight:500;color:var(--gold);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px}
+.pick-row{font-size:0.75rem;color:var(--navy-mid);padding:2px 0;display:flex;gap:6px}
+.pick-row::before{content:'★';color:var(--gold);font-size:0.7rem}
+.no-picks-msg{font-size:0.78rem;color:var(--muted);font-style:italic}
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ── -->
+<header>
+  <div class="brand">
+    <h1>California Voter Guide 2026</h1>
+    <span>June Primary</span>
+  </div>
+  <div class="hdr-right">
+    <div class="proto">PROTOTYPE</div>
+  </div>
+</header>
+
+<div class="page-tabs no-print">
+  <button class="ptab active" onclick="switchPage('ballot',this)">🗳 My Ballot</button>
+  <button class="ptab" onclick="switchPage('browse',this)">📋 Browse All Elections</button>
+</div>
+
+<!-- ════════════════════
+     MY BALLOT PAGE
+════════════════════ -->
+<div id="page-ballot" class="page active">
+
+  <!-- HERO: address form → map → your ballot summary, all stacked vertically -->
+  <div class="ballot-hero no-print">
+
+    <div class="hero-addr">
+      <h2>Find my ballot</h2>
+      <p class="sub">Enter the California address where you are registered to vote to see only the elections on your ballot. Star the candidates you like.</p>
+      <div class="addr-row">
+        <input id="addrInput" type="text" placeholder="Enter your registered address">
+        <button class="go-btn" onclick="lookupAddress()">Go</button>
+      </div>
+      <div class="addr-status" id="addrStatus"></div>
+      <button class="sample-link" onclick="loadSample()">Try a sample ballot (Sacramento, CA-5)</button>
+      <div style="font-size:0.67rem;color:var(--muted);margin-top:6px">You cannot cast a vote with this tool.</div>
+      <div class="dist-chips" id="distChips"></div>
+    </div>
+
+    <!-- Section 2: Map -->
+    <div class="hero-map">
+      <svg id="mini-map"></svg>
+      <div class="map-pills">
+        <button class="mpill active" onclick="setMapType('congressional',this)">Congressional</button>
+        <button class="mpill" onclick="setMapType('senate',this)">Senate</button>
+        <button class="mpill" onclick="setMapType('assembly',this)">Assembly</button>
+      </div>
+      <div class="map-label" id="mapLabel">Enter address to highlight your district</div>
+    </div>
+
+    <!-- Section 3: Your Ballot summary + actions -->
+    <div class="hero-summary">
+      <div class="summary-top">
+        <div class="stitle">Your Ballot</div>
+        <div id="summaryStats">
+          <div style="font-size:0.76rem;color:var(--muted);line-height:1.6;margin-top:4px">Enter your address to see your elections.</div>
+        </div>
+      </div>
+      <div id="summaryActions" style="display:none">
+        <div class="summary-actions">
+          <button class="action-btn print" onclick="window.print()">🖨 Print ballot summary</button>
+          <button class="action-btn share" onclick="openShareModal()">🔗 Share my picks</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PRINT HEADER -->
+  <div class="print-header print-only">
+    <div>
+      <div class="print-header-title">My California Ballot · 2026 Primary</div>
+      <div class="print-header-sub">California Voter Guide · Prototype · Data is illustrative sample only · Starred picks are my personal selections</div>
+    </div>
+    <div id="printDistricts" style="font-size:0.72rem;color:var(--muted);text-align:right;line-height:1.8"></div>
+  </div>
+
+  <!-- BALLOT BODY -->
+  <div class="ballot-body" id="ballotBody">
+    <div class="ballot-welcome" id="ballotWelcome">
+      <div class="icon">🗳</div>
+      <h3>Your personalized ballot</h3>
+      <p>Enter your California address above and we'll show you only the elections on your specific ballot, from Governor all the way down to your Assembly district.</p>
+      <button class="cta" onclick="loadSample()">Try a sample ballot →</button>
+    </div>
+    <div id="ballotContent" style="display:none"></div>
+  </div>
+</div>
+
+<!-- ════════════════════
+     BROWSE PAGE
+════════════════════ -->
+<div id="page-browse" class="page">
+  <div class="race-topnav no-print">
+    <div class="race-topnav-inner" id="raceTopNav"></div>
+  </div>
+  <div class="browse-filter-bar no-print" id="browseFilterBar" style="display:none">
+    <span class="filter-label">Filter by district:</span>
+    <div class="filter-tabs" id="filterTabs"></div>
+    <div class="browse-search"><input type="text" id="browseSearch" placeholder="Search candidates…" oninput="searchBrowse()"></div>
+  </div>
+  <div class="browse-body" id="browseBody">
+    <div class="browse-welcome" id="browseWelcome">
+      <div class="icon">📋</div>
+      <h3>Browse All Elections</h3>
+      <p>Select any election above to compare all candidates.</p>
+    </div>
+    <div id="browseContent" style="display:none"></div>
+  </div>
+</div>
+
+<!-- Back to top -->
+<button class="back-to-top no-print" id="backToTop" onclick="scrollToTop()" title="Back to top">↑</button>
+
+<!-- Share modal -->
+<div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h3>Share your picks</h3>
+    <p>This link encodes your starred candidates so anyone you send it to sees exactly who you picked. Nothing is stored on a server. It's all in the URL.</p>
+    <input class="modal-url" id="shareUrl" readonly onclick="this.select()">
+    <div class="modal-actions">
+      <button class="modal-copy" onclick="copyShareUrl()">Copy link</button>
+      <button class="modal-close" onclick="closeModal()">Close</button>
+    </div>
+    <div class="modal-copied" id="modalCopied"></div>
+    <div class="picks-preview" id="picksPreview"></div>
+  </div>
+</div>
+
+<div id="ttip"></div>
+
+<script>
+// ═══════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════
+const PL={dem:'Democrat',rep:'Republican',npp:'No Party Preference'};
+const PC={dem:'p-dem',rep:'p-rep',npp:'p-npp'};
+const ABG={dem:'#EBF2FB',rep:'#FAEAE7',npp:'#EBF4EC'};
+const AC={dem:'#2563A8',rep:'#B8311F',npp:'#4A7C4E'};
+
+const RACES=[
+  {id:'gov',name:'Governor',type:'statewide',desc:'Statewide · All California voters',
+   expl:'The Governor is California\'s chief executive who signs or vetoes laws, controls the state budget, commands the National Guard, and appoints judges and cabinet members.',
+   candidates:[
+    {id:'gov-steyer',name:'Tom Steyer',party:'dem',role:'Hedge fund manager & climate activist',av:'TS',stances:['Expand healthcare toward single-payer system','Aggressive climate action: net zero by 2035','Tax reform targeting top income brackets','Expand affordable housing via state funding'],end:['California Federation of Teachers','Multiple environmental groups','Progressive CA legislators'],ft:'$28M raised',fp:72,td:['Self-funded (personal wealth)','Climate advocacy PACs','Labor unions (SEIU, CTA)'],inc:false},
+    {id:'gov-becerra',name:'Xavier Becerra',party:'dem',role:'Former CA AG & U.S. Sec. of Health',av:'XB',stances:['Strengthen ACA and push toward universal coverage','Criminal justice reform and police accountability','Immigration protections and DACA expansion','Invest in public education'],end:['California Democratic Party','SEIU California','Multiple county Democratic parties'],ft:'$19M raised',fp:49,td:['Trial lawyers associations','Labor union PACs','Small-dollar donors'],inc:false},
+    {id:'gov-bianco',name:'Chad Bianco',party:'rep',role:'Riverside County Sheriff',av:'CB',stances:['Reverse Prop. 47 to restore criminal penalties','Border security; oppose sanctuary policies','Cut state regulations on businesses','Oppose mandates; expand parental rights in education'],end:['California Republican Party','Law Enforcement Associations','Central Valley elected officials'],ft:'$8M raised',fp:21,td:['Republican donor network','Law enforcement PACs','Small business associations'],inc:false},
+  ]},
+  {id:'ltgov',name:'Lt. Governor',type:'statewide',desc:'Statewide · All California voters',
+   expl:'The Lt. Governor chairs the State Lands Commission, sits on the UC/CSU boards of trustees, and becomes Governor if the Governor cannot serve.',
+   candidates:[
+    {id:'ltgov-ek',name:'Eleni Kounalakis',party:'dem',role:'Current Lt. Governor',av:'EK',stances:['Trade and international economic ties for CA','Higher education access and UC/CSU funding','Climate resilience and infrastructure','Protect reproductive rights'],end:['Governor Newsom','California Labor Federation',"Women's political caucuses"],ft:'$4.2M raised',fp:60,td:['Real estate & developer donors','Labor PACs',"Women's fundraising networks"],inc:true},
+    {id:'ltgov-early',name:'Eric Early',party:'rep',role:'Attorney & former candidate',av:'EE',stances:['Reduce state regulatory burden on businesses','Address homelessness through enforcement','Reform state spending and reduce deficits','Support law enforcement funding'],end:['CA Republican Party','Conservative donor coalitions'],ft:'$1.1M raised',fp:16,td:['Business PACs','Individual Republican donors'],inc:false},
+  ]},
+  {id:'sos',name:'Secretary of State',type:'statewide',desc:'Statewide · Oversees elections & business filings',
+   expl:'The Secretary of State runs California\'s elections, maintains voter rolls, and keeps official records of corporations and business filings.',
+   candidates:[
+    {id:'sos-weber',name:'Shirley Weber',party:'dem',role:'Current Secretary of State',av:'SW',stances:['Expand voter access and automatic registration','Protect election integrity and paper ballot trails','Modernize business filing systems','Language access for non-English speakers'],end:['CA Democratic Party','Common Cause CA','League of Women Voters CA'],ft:'$2.8M raised',fp:65,td:['CA Democratic donors','Voting rights advocates','Labor organizations'],inc:true},
+  ]},
+  {id:'ag',name:'Attorney General',type:'statewide',desc:'Statewide · Chief law enforcement officer',
+   expl:'The AG is California\'s top lawyer who represents the state in court, enforces consumer protection and environmental laws, and can prosecute cases local DAs won\'t.',
+   candidates:[
+    {id:'ag-bonta',name:'Rob Bonta',party:'dem',role:'Current Attorney General',av:'RB',stances:['Consumer and worker protection enforcement','Gun violence prevention litigation','Environmental enforcement against polluters','Reproductive rights legal defense'],end:['CA Democratic Party','Planned Parenthood CA','Environmental advocacy groups'],ft:'$6.1M raised',fp:70,td:['Trial lawyers','Progressive donor network','Labor unions'],inc:true},
+    {id:'ag-hochman',name:'Nathan Hochman',party:'rep',role:'Former federal prosecutor',av:'NH',stances:['Increase prosecution of violent crime','Reform Prop. 47 enforcement approach','Restore public trust in criminal justice','Oppose lenient DA policies'],end:['CA Republican Party','Law enforcement associations'],ft:'$2.4M raised',fp:28,td:['Republican business donors','Law enforcement PACs'],inc:false},
+  ]},
+  {id:'controller',name:'Controller',type:'statewide',desc:'Statewide · Manages state finances & audits',
+   expl:'The Controller is California\'s chief fiscal officer who audits state agencies, signs the state\'s checks, and publishes the public employee salary database.',
+   candidates:[
+    {id:'ctrl-cohen',name:'Malia Cohen',party:'dem',role:'Current State Controller',av:'MC',stances:['Transparent state financial reporting','Audit state agencies for waste and fraud','Equity-focused budget analysis','Expand financial literacy programs'],end:['CA Democratic Party','Labor organizations','Progressive networks'],ft:'$3.4M raised',fp:58,td:['Labor unions','Democratic donor networks'],inc:true},
+  ]},
+  {id:'treasurer',name:'Treasurer',type:'statewide',desc:'Statewide · Manages state investments & bonds',
+   expl:'The Treasurer manages California\'s investments, issues bonds to finance housing and infrastructure, and oversees cash flow for the world\'s 5th-largest economy.',
+   candidates:[
+    {id:'tres-ma',name:'Fiona Ma',party:'dem',role:'Current State Treasurer',av:'FM',stances:['Green bonds and climate-focused investments','Affordable housing bond financing','Infrastructure investment programs','Cannabis industry banking access'],end:['CA Democratic Party','Housing advocates','Environmental groups'],ft:'$3.9M raised',fp:62,td:['Financial industry donors','Labor PACs','Democratic networks'],inc:true},
+  ]},
+  {id:'supt',name:'Superintendent',type:'statewide',desc:'Statewide · Leads California\'s public schools',
+   expl:'The Superintendent of Public Instruction oversees K-12 public schools, distributes funding to districts, and sets curriculum and standardized testing policy.',
+   candidates:[
+    {id:'supt-thurmond',name:'Tony Thurmond',party:'npp',role:'Current Superintendent',av:'TT',stances:['Universal TK funding and expansion','Mental health support in schools','Teacher recruitment and retention','Reduce achievement gaps'],end:['California Teachers Assn.','School employee unions','Education advocacy groups'],ft:'$5.1M raised',fp:55,td:['Teachers unions (CTA, CFT)','Education PACs'],inc:true},
+    {id:'supt-tuck',name:'Marshall Tuck',party:'npp',role:'Education reform advocate',av:'MT',stances:['Expand charter school options','Overhaul teacher tenure policies','Improve standardized performance metrics','Increase school choice for families'],end:['EdVoice','Reform-minded donors','Charter school network'],ft:'$4.3M raised',fp:46,td:['Silicon Valley tech donors','Education reform PACs','Business networks'],inc:false},
+  ]},
+  {id:'boe',name:'Board of Equalization',type:'statewide',desc:'Statewide · Property & sales tax appeals',
+   expl:'The Board of Equalization handles property tax appeals, administers sales and use taxes, and ensures uniform tax assessment across California\'s 58 counties.',
+   candidates:[
+    {id:'boe-lieber',name:'Sally Lieber',party:'dem',role:'Former State Assemblywoman',av:'SL',stances:['Transparent tax assessment process','Consumer protection in tax appeals','Equitable property tax administration'],end:['CA Democratic Party'],ft:'$0.9M raised',fp:40,td:['Democratic PACs','Labor unions'],inc:false},
+  ]},
+  {id:'ins',name:'Insurance Commissioner',type:'statewide',desc:'Statewide · Regulates insurance industry',
+   expl:'The Insurance Commissioner approves or rejects rate changes for car, home, and health insurance, and is at the center of California\'s ongoing wildfire insurance crisis.',
+   candidates:[
+    {id:'ins-lara',name:'Ricardo Lara',party:'dem',role:'Current Insurance Commissioner',av:'RL',stances:['Reform homeowners insurance after wildfires','Climate risk disclosure requirements','Consumer protection from rate hikes','Expand Medi-Cal coverage requirements'],end:['CA Democratic Party','Consumer advocacy groups'],ft:'$4.6M raised',fp:60,td:['Insurance industry donors (under scrutiny)','Labor unions','Democratic networks'],inc:true},
+    {id:'ins-pierson',name:'Vern Pierson',party:'rep',role:'El Dorado County DA',av:'VP',stances:['Deregulate insurance to bring back insurers','Reduce coverage mandates','Address wildfire liability differently','Reform FAIR Plan structure'],end:['CA Republican Party','Business associations'],ft:'$1.2M raised',fp:16,td:['Republican business donors','Insurance industry interests'],inc:false},
+  ]},
+  {id:'ushouse',name:'U.S. House',type:'district',districtLabel:'Congressional District',desc:'By congressional district · Federal representation',
+   expl:'Your U.S. Representative votes on federal laws, the national budget, war declarations, and treaties. California has 52 of the 435 seats in the House.',
+   candidates:{
+    '5':[{id:'cd5-thompson',name:'Mike Thompson',party:'dem',role:'Current U.S. Representative',av:'MT2',stances:['Gun safety legislation: authored multiple bills','Water and agriculture for Napa/Solano','Veterans services expansion','Wine industry and tourism economy'],end:['CA Democratic Party','Mayors Conference','Labor unions'],ft:'$2.1M raised',fp:70,td:['Wine & agriculture industry','Labor PACs','Democratic networks'],inc:true}],
+    '13':[
+      {id:'cd13-gray',name:'Adam Gray',party:'dem',role:'Former State Assemblyman',av:'AG',stances:['Water infrastructure and Central Valley agriculture','Bipartisan infrastructure deals','Veterans services expansion','Economic development in the Valley'],end:['CA Democratic Party','Farm Bureau (split)','Labor unions'],ft:'$3.8M raised',fp:52,td:['Agricultural PACs','Labor unions','Business PACs'],inc:false},
+      {id:'cd13-duarte',name:'John Duarte',party:'rep',role:'Farmer & current U.S. Rep.',av:'JD',stances:['Water rights for farmers, opposing federal restrictions','Cut federal spending and regulation','Oppose ESA restrictions on agriculture','Border security'],end:['CA Republican Party','Farm Bureau','NRCC'],ft:'$3.1M raised',fp:42,td:['Agricultural industry','Republican donor network'],inc:true},
+    ],
+    '22':[
+      {id:'cd22-salas',name:'Rudy Salas',party:'dem',role:'Former State Assemblyman',av:'RS',stances:['Water and agriculture for Kern County','Healthcare expansion','Workers rights and union support','Immigration reform'],end:['CA Democratic Party','Labor organizations'],ft:'$2.9M raised',fp:48,td:['Labor PACs','Democratic donor network'],inc:false},
+      {id:'cd22-valadao',name:'David Valadao',party:'rep',role:'Current U.S. Representative',av:'DV',stances:['Support DACA (moderate position)','Water infrastructure for farmers','Bipartisan healthcare compromise','Oppose tax increases'],end:['NRCC','Farm interests'],ft:'$3.3M raised',fp:54,td:['Agricultural PACs','Republican business donors'],inc:true},
+    ],
+  }},
+  {id:'state_senate',name:'State Senate',type:'district',districtLabel:'Senate District',desc:'By senate district · State legislation',
+   expl:'Your State Senator is one of 40 senators who write California\'s laws, confirm the Governor\'s appointments, and approve the state budget every June.',
+   candidates:{
+    '3':[{id:'sd3-dodd',name:'Bill Dodd',party:'dem',role:'Current State Senator',av:'BD',stances:['Water and agriculture for Napa/Solano','Healthcare access in rural counties','Wildfire prevention and utility reform','Economic development'],end:['CA Labor Federation','Local mayors','Agricultural interests'],ft:'$1.5M raised',fp:62,td:['Agriculture and wine industry','Labor unions'],inc:true}],
+    '8':[{id:'sd8-cortese',name:'Dave Cortese',party:'dem',role:'Current State Senator',av:'DC',stances:['Labor rights and union protection','Housing affordability and tenant rights','Criminal justice reform','Environmental protections'],end:['CA Labor Federation','Environmental groups','Progressive caucuses'],ft:'$1.8M raised',fp:60,td:['Labor unions','Trial lawyers','Democratic networks'],inc:true}],
+    '14':[{id:'sd14-stern',name:'Henry Stern',party:'dem',role:'Former State Senator',av:'HS',stances:['Climate and wildfire policy','Water policy reform','Tech regulation and data privacy','Education funding'],end:['Environmental groups','Education advocates'],ft:'$1.4M raised',fp:55,td:['Environmental PACs','Labor unions'],inc:false}],
+  }},
+  {id:'assembly',name:'State Assembly',type:'district',districtLabel:'Assembly District',desc:'By assembly district · State legislation',
+   expl:'Your Assemblymember is one of 80 members of the lower chamber. They write most California legislation and must approve the state budget each year.',
+   candidates:{
+    '4':[{id:'ad4-aguiar',name:'Cecilia Aguiar-Curry',party:'dem',role:'Current Assemblymember',av:'CA2',stances:['Rural broadband and infrastructure','Agriculture and water for Yolo/Napa','Housing affordability','Local government empowerment'],end:['CA Farm Bureau','Labor organizations','Local mayors'],ft:'$1.2M raised',fp:60,td:['Agricultural interests','Labor unions'],inc:true}],
+    '25':[{id:'ad25-lee',name:'Alex Lee',party:'dem',role:'Current Assemblymember',av:'AL',stances:['Wealth tax on ultra-high-net-worth individuals','Universal healthcare (single payer)','Renters rights and anti-eviction protections','Criminal justice reform'],end:['DSA','Renters unions','Progressive networks'],ft:'$0.9M raised',fp:50,td:['Small-dollar donors','Progressive PACs','Labor unions'],inc:true}],
+    '60':[{id:'ad60-ramos',name:'James Ramos',party:'dem',role:'Current Assemblymember',av:'JR',stances:['Indigenous community rights','Mental health services expansion','Public safety reform','Economic development in the Inland Empire'],end:['Tribal governments','Labor organizations','Education groups'],ft:'$1.1M raised',fp:58,td:['Tribal gaming interests','Labor unions','Democratic networks'],inc:true}],
+    '74':[{id:'ad74-dixon',name:'Diane Dixon',party:'rep',role:'Current Assemblymember',av:'DD',stances:['Public safety and anti-crime legislation','Oppose housing mandates on cities','Fiscal conservatism and budget restraint','Parental rights in education'],end:['CA Republican Party','Law enforcement associations','Business groups'],ft:'$1.3M raised',fp:55,td:['Republican business donors','Real estate interests'],inc:true}],
+  }},
+];
+
+const SAMPLE_DIST={congressional:'5',senate:'3',assembly:'4'};
+
+// ═══════════════════════════════════════════════════
+// LOCALSTORAGE STARS
+// ═══════════════════════════════════════════════════
+let starred=new Set();
+function loadStars(){try{const s=localStorage.getItem('ca_voter_stars_2026');if(s)starred=new Set(JSON.parse(s));}catch(e){}}
+function saveStars(){try{localStorage.setItem('ca_voter_stars_2026',JSON.stringify([...starred]));}catch(e){}}
+function toggleStar(cid,btn){
+  if(starred.has(cid)){starred.delete(cid);btn.classList.remove('on');}
+  else{starred.add(cid);btn.classList.add('on');}
+  saveStars();
+  const card=btn.closest('.candidate-card');
+  if(card) card.classList.toggle('starred',starred.has(cid));
+  // Live-update the starred count badge
+  updateSummaryBadge();
+  // Live-update the picks note above the races
+  const note=document.getElementById('picksPrintNote');
+  if(note){
+    const summary=getPicksSummary();
+    note.innerHTML=`⭐ Your starred picks:<br>${summary}`;
+    note.className='picks-print-note'+(starred.size>0?' has-picks':'');
+  }
+  // Keep print picks list current
+  updatePrintPicks();
+}
+function updateSummaryBadge(){
+  const el=document.getElementById('starCountBadge');
+  if(el) el.textContent=starred.size>0?`${starred.size} starred`:'None yet';
+}
+
+// Returns picks as "OfficeName: Candidate Name (Party): Role" lines, one per pick
+function getPicksSummary(){
+  if(!starred.size) return '<span style="color:var(--muted);font-style:italic">None yet. Star a candidate below</span>';
+  const lines=[];
+  RACES.forEach(race=>{
+    const cands=Array.isArray(race.candidates)
+      ? race.candidates
+      : Object.values(race.candidates).flat();
+    cands.forEach(c=>{
+      if(starred.has(c.id)){
+        lines.push(`<span style="font-size:0.74rem;display:block;padding:2px 0;border-bottom:1px solid var(--border)"><strong style="color:var(--navy)">${race.name}:</strong> ${c.name} <span style="color:var(--muted)">(${PL[c.party]}): ${c.role}</span></span>`);
+      }
+    });
+  });
+  return lines.join('');
+}
+
+// ═══════════════════════════════════════════════════
+// PAGE SWITCHING
+// ═══════════════════════════════════════════════════
+function switchPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ptab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(btn)btn.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════════
+// MY BALLOT
+// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════
+// ADDRESS LOOKUP
+// Google Civic Information API (primary)
+// Falls back to Census Bureau API if Google fails
+// ═══════════════════════════════════════════════════
+const GOOGLE_API_KEY = 'AIzaSyC5E2-adnG5MnqFWOgNGQQneb8oL3InwW4';
+
+let myDist = null;
+
+function loadSample(){
+  myDist = {...SAMPLE_DIST};
+  setAddrStatus('Sacramento, CA (sample) · CD-5, SD-3, AD-4','ok');
+  renderBallot(); renderDistChips(); drawMap();
+}
+
+// Places autocomplete - called by Google script callback
+// Uses PlaceAutocompleteElement 
+function initPlacesAutocomplete(){
+  if(!window.google?.maps?.places) return;
+  const input = document.getElementById('addrInput');
+  const container = input.parentElement;
+
+  // PlaceAutocompleteElement 
+  google.maps.importLibrary('places').then(({PlaceAutocompleteElement})=>{
+    const el = new PlaceAutocompleteElement({
+      componentRestrictions: {country: 'us'},
+      types: ['address'],
+    });
+
+    // Style to match input
+    el.style.cssText='position:absolute;top:100%;left:0;right:0;z-index:999;margin-top:2px';
+    container.style.position='relative';
+    container.appendChild(el);
+
+    // Wire the element to address input
+    el.addEventListener('gmp-placeselect', async(e)=>{
+      const place = e.placePrediction.toPlace();
+      await place.fetchFields({fields:['formattedAddress']});
+      input.value = place.formattedAddress;
+      lookupAddress();
+    });
+
+    // Forward typing from input to the autocomplete element
+    input.addEventListener('input', ()=>{
+      el.value = input.value;
+    });
+  }).catch(err=>{
+    // If Places fails, the manual input + lookup still works fine
+    console.warn('Places autocomplete unavailable:', err);
+  });
+}
+
+async function lookupAddress(){
+  const addr = document.getElementById('addrInput').value.trim();
+  if(!addr){setAddrStatus('Please enter your registered address.','err');return;}
+  setAddrStatus('Looking up your districts…','');
+  // Try Google Civic first, fall back to Census
+  const result = await lookupWithGoogle(addr) || await lookupWithCensus(addr);
+  if(!result){
+    setAddrStatus('Address not found. Try including your city and zip code.','err');
+    return;
+  }
+  myDist = result;
+  const parts=[];
+  if(myDist.congressional) parts.push(`CD-${myDist.congressional}`);
+  if(myDist.senate) parts.push(`SD-${myDist.senate}`);
+  if(myDist.assembly) parts.push(`AD-${myDist.assembly}`);
+  setAddrStatus(parts.length ? parts.join(' · ') : 'Districts found','ok');
+  renderBallot(); renderDistChips(); drawMap();
+}
+
+async function lookupWithGoogle(addr){
+  try{
+    // Google Civic Information API - divisionsByAddress
+    // Returns OCD division IDs like ocd-division/country:us/state:ca/cd:13
+    const cleanAddr = addr.replace(/,+/g,',').replace(/,\s*,/g,',').trim();
+    const url=`https://civicinfo.googleapis.com/civicinfo/v2/representatives?address=${encodeURIComponent(cleanAddr)}&key=${GOOGLE_API_KEY}&includeOffices=false`;
+    const res = await fetch(url);
+    if(!res.ok){
+      console.warn(`Google Civic API returned ${res.status}. Check that Civic Information API is enabled in Google Cloud Console.`);
+      return null;
+    }
+    const data = await res.json();
+    if(data.error || !data.divisions) return null;
+
+    let congressional=null, senate=null, assembly=null;
+    Object.keys(data.divisions).forEach(ocd=>{
+      // Congressional: ocd-division/country:us/state:ca/cd:13
+      const cdMatch = ocd.match(/\/cd:(\d+)$/);
+      if(cdMatch) congressional = String(parseInt(cdMatch[1]));
+      // State Senate: ocd-division/country:us/state:ca/sldu:3
+      const ssMatch = ocd.match(/\/sldu:(\d+)$/);
+      if(ssMatch) senate = String(parseInt(ssMatch[1]));
+      // State Assembly: ocd-division/country:us/state:ca/sldl:4
+      const saMatch = ocd.match(/\/sldl:(\d+)$/);
+      if(saMatch) assembly = String(parseInt(saMatch[1]));
+    });
+
+    if(!congressional && !senate && !assembly) return null;
+    return {congressional, senate, assembly};
+  }catch(e){
+    console.warn('Google Civic lookup failed, trying Census fallback:', e);
+    return null;
+  }
+}
+
+async function lookupWithCensus(addr){
+  try{
+    const url=`https://geocoding.geo.census.gov/geocoder/geographies/onelineaddress?address=${encodeURIComponent(addr+', CA')}&benchmark=Public_AR_Current&vintage=Current_Current&layers=all&format=json`;
+    const data=await(await fetch(url)).json();
+    const matches=data?.result?.addressMatches;
+    if(!matches?.length) return null;
+    const geo=matches[0].geographies;
+    const cdG=geo['119th Congressional Districts']||geo['118th Congressional Districts']||geo['Congressional Districts'];
+    const ssG=geo['State Legislative Districts - Upper'];
+    const saG=geo['State Legislative Districts - Lower'];
+    const congressional=cdG?.[0]?String(parseInt(cdG[0].BASENAME||cdG[0].NAME)):null;
+    const senate=ssG?.[0]?String(parseInt(ssG[0].BASENAME||ssG[0].NAME)):null;
+    const assembly=saG?.[0]?String(parseInt(saG[0].BASENAME||saG[0].NAME)):null;
+    if(!congressional && !senate && !assembly) return null;
+    return {congressional, senate, assembly};
+  }catch(e){
+    console.warn('Census fallback also failed:', e);
+    return null;
+  }
+}
+
+document.getElementById('addrInput').addEventListener('keydown',e=>{if(e.key==='Enter')lookupAddress();});
+
+function setAddrStatus(msg,type){
+  const el=document.getElementById('addrStatus');
+  el.textContent=msg;el.className='addr-status'+(type?' '+type:'');
+}
+
+function renderDistChips(){
+  const row=document.getElementById('distChips');
+  row.innerHTML='';
+  const items=[{label:`CD-${myDist.congressional||'?'}`,type:'congressional'},{label:`SD-${myDist.senate||'?'}`,type:'senate'},{label:`AD-${myDist.assembly||'?'}`,type:'assembly'}];
+  items.forEach(item=>{
+    const c=document.createElement('span');c.className='dchip'+(currentMapT===item.type?' active':'');
+    c.textContent=item.label;
+    c.onclick=()=>{setMapType(item.type,null);document.querySelectorAll('.dchip').forEach(x=>x.classList.remove('active'));c.classList.add('active');};
+    row.appendChild(c);
+  });
+  row.parentElement.classList.add('show');
+}
+
+function renderBallot(){
+  document.getElementById('ballotWelcome').style.display='none';
+  document.getElementById('ballotContent').style.display='block';
+
+  const swRaces=RACES.filter(r=>r.type==='statewide');
+  const rMap={congressional:'ushouse',senate:'state_senate',assembly:'assembly'};
+  const distRaces=[];
+  ['congressional','senate','assembly'].forEach(dt=>{
+    const race=RACES.find(r=>r.id===rMap[dt]);
+    const dn=myDist[dt];
+    if(race&&dn&&race.candidates[dn])distRaces.push({race,dn});
+  });
+
+  const totalC=swRaces.reduce((s,r)=>s+r.candidates.length,0)+distRaces.reduce((s,{race,dn})=>s+race.candidates[dn].length,0);
+  const totalR=swRaces.length+distRaces.length;
+
+  // Summary panel 
+  const distNumsHTML = (myDist.congressional||myDist.senate||myDist.assembly) ? `
+    <div class="summary-dist-block">
+      <div class="summary-dist-label">Your districts</div>
+      ${myDist.congressional?`<div class="summary-dist-row"><span class="dist-type">Congressional</span><span class="dist-num">District ${myDist.congressional}</span></div>`:''}
+      ${myDist.senate?`<div class="summary-dist-row"><span class="dist-type">State Senate</span><span class="dist-num">District ${myDist.senate}</span></div>`:''}
+      ${myDist.assembly?`<div class="summary-dist-row"><span class="dist-type">State Assembly</span><span class="dist-num">District ${myDist.assembly}</span></div>`:''}
+    </div>` : '';
+  document.getElementById('summaryStats').innerHTML=`
+    <div class="ballot-stat"><span class="stat-label">Total elections</span><span class="stat-val">${totalR}</span></div>
+    <div class="ballot-stat"><span class="stat-label">Candidates</span><span class="stat-val">${totalC}</span></div>
+    <div class="ballot-stat"><span class="stat-label">Statewide offices</span><span class="stat-val">${swRaces.length}</span></div>
+    <div class="ballot-stat"><span class="stat-label">District races</span><span class="stat-val">${distRaces.length} found</span></div>
+    <div class="ballot-stat"><span class="stat-label">Starred</span><span class="stat-val" id="starCountBadge">${starred.size>0?starred.size+' starred':'None yet'}</span></div>
+    ${distNumsHTML}`;
+  document.getElementById('summaryActions').style.display='block';
+
+  // Print districts
+  document.getElementById('printDistricts').innerHTML=
+    `CD-${myDist.congressional||'?'} · SD-${myDist.senate||'?'} · AD-${myDist.assembly||'?'}`;
+
+  // Quick-nav entries
+  const allBallotRaces=[
+    ...swRaces.map(r=>({id:r.id,label:r.name,distNum:null})),
+    ...distRaces.map(({race,dn})=>({id:race.id,label:race.name,distNum:dn}))
+  ];
+  const quickNavHTML=`<div class="ballot-quicknav" id="ballotQuicknav">
+    <span class="bqnav-label">Jump to:</span>
+    <button class="bqnav-btn active" id="bqnav-all" onclick="scrollToBallotRace(null,this)">All</button>
+    ${allBallotRaces.map(r=>`<button class="bqnav-btn" id="bqnav-${r.id}" onclick="scrollToBallotRace('section-${r.id}${r.distNum?'-'+r.distNum:''}',this)">${r.label}${r.distNum?' (D'+r.distNum+')':''}</button>`).join('')}
+  </div>`;
+
+  // Ballot content
+  const bc=document.getElementById('ballotContent');
+  bc.innerHTML=`
+    <div class="print-picks" id="printPicksBlock">
+      <div class="print-picks-title">My Ballot Picks · California 2026 Primary</div>
+      <div id="printPicksList"></div>
+      <div style="font-size:0.7rem;color:var(--muted);margin-top:12px">Printed from California Voter Guide 2026. You cannot cast a vote with this tool. Data is prototype/sample only.</div>
+    </div>
+    <div class="picks-print-note ${starred.size>0?'has-picks':''}" id="picksPrintNote">
+      ⭐ Your starred picks: ${getPicksSummary()}
+    </div>
+    <div style="font-size:0.69rem;color:var(--muted);margin-bottom:0.75rem;padding:5px 0;border-bottom:1px solid var(--border)">
+      ★ Star any candidate to save your pick. Saved in this browser only. Use "Share my picks" to send your ballot to others.
+    </div>
+    ${quickNavHTML}
+    <div style="margin-bottom:0.85rem;position:relative">
+      <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--muted)">🔍</span>
+      <input id="ballotSearch" type="text" placeholder="Search candidates on your ballot…" oninput="searchBallot()" style="width:100%;padding:7px 10px 7px 30px;font-size:0.8rem;border:1px solid var(--border);border-radius:5px;font-family:'DM Sans',sans-serif;color:var(--text)">
+    </div>
+    <div class="races-divider">Statewide Offices: All California Voters</div>
+    ${swRaces.map(r=>buildRaceBlock(r,null)).join('')}
+    ${distRaces.length?`<div class="races-divider">Your District Elections</div>${distRaces.map(({race,dn})=>buildRaceBlock(race,dn)).join('')}`:''}
+    <div class="data-note">⚠️ <strong>Prototype:</strong> All candidate data is illustrative sample data for demonstration. Live version uses FPPC/FEC filings and nonpartisan journalism. No editorial stance is taken. You cannot cast a vote with this tool.</div>`;
+  // Populate the print picks list
+  updatePrintPicks();
+}
+
+function buildRaceBlock(race,distNum){
+  const cands=distNum?race.candidates[distNum]:race.candidates;
+  const distLabel=distNum?` (${race.districtLabel} ${distNum})`:'';
+  const scope=distNum?`📍 District ${distNum}`:'🌎 All voters';
+  const multi=cands.length>1;
+  const anchorId=`section-${race.id}${distNum?'-'+distNum:''}`;
+  return`<div class="section-block" id="${anchorId}">
+    <div class="section-hdr">
+      <h3>${race.name}${distLabel}</h3>
+      <span class="section-explainer">${race.expl||''}</span>
+      <span class="section-scope">${scope}</span>
+    </div>
+    <div class="candidates-grid ${multi?'multi':'single'}">${cands.map(c=>buildCardHTML(c)).join('')}</div>
+  </div>`;
+}
+
+function scrollToBallotRace(anchorId, btn){
+  document.querySelectorAll('.bqnav-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(!anchorId){window.scrollTo({top:document.getElementById('ballotContent').offsetTop-160,behavior:'smooth'});return;}
+  const el=document.getElementById(anchorId);
+  if(el){const top=el.getBoundingClientRect().top+window.scrollY-160;window.scrollTo({top,behavior:'smooth'});}
+}
+
+function buildCardHTML(c){
+  const isStarred=starred.has(c.id);
+  return`<div class="candidate-card${isStarred?' starred':''}" id="card-${c.id}">
+    <div class="card-header" style="padding-right:42px">
+      <div class="avatar" style="background:${ABG[c.party]};color:${AC[c.party]}">${c.av}</div>
+      <div class="card-name-block">
+        <div class="cname">${c.name}${c.inc?'<span class="incumbent">Incumbent</span>':''}</div>
+        <span class="cparty ${PC[c.party]}">${PL[c.party]}</span>
+        <div class="crole">${c.role}</div>
+      </div>
+    </div>
+    <button class="star-btn${isStarred?' on':''}" onclick="toggleStar('${c.id}',this)" title="${isStarred?'Remove pick':'Star this candidate'}">★</button>
+    <div class="card-body">
+      <div class="info-grid">
+        <div>
+          <div class="iblock"><h4>Policy Stances</h4>
+            <ul class="blist">${c.stances.map(s=>`<li>${s}</li>`).join('')}</ul>
+          </div>
+        </div>
+        <div>
+          <div class="iblock" style="margin-bottom:0.75rem"><h4>Endorsements</h4>
+            <ul class="blist">${c.end.map(e=>`<li>${e}</li>`).join('')}</ul>
+          </div>
+          <div class="iblock"><h4>Funding & Top Donors</h4>
+            <div class="fbar-label"><span>${c.ft}</span><span>${c.fp}% of top raiser</span></div>
+            <div class="fbar-track"><div class="fbar-fill" style="width:${c.fp}%"></div></div>
+            <div class="dtags">${c.td.map(d=>`<span class="dtag">${d}</span>`).join('')}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════════
+// SHARE / URL ENCODING
+// ═══════════════════════════════════════════════════
+function openShareModal(){
+  const picks=[...starred];
+  const encoded=btoa(JSON.stringify(picks));
+  const url=`${location.origin}${location.pathname}#picks=${encoded}`;
+  document.getElementById('shareUrl').value=url;
+  const preview=document.getElementById('picksPreview');
+  if(picks.length){
+    const lines=[];
+    RACES.forEach(race=>{
+      const cands=Array.isArray(race.candidates)
+        ? race.candidates
+        : Object.values(race.candidates).flat();
+      cands.forEach(c=>{
+        if(starred.has(c.id)){
+          lines.push(`<div class="pick-row"><strong>${race.name}:</strong> ${c.name} <span style="color:var(--muted);font-size:0.68rem">(${PL[c.party]}): ${c.role}</div>`);
+        }
+      });
+    });
+    preview.innerHTML=`<div class="picks-preview-title">Your starred picks</div>${lines.join('')}`;
+  } else {
+    preview.innerHTML=`<div class="no-picks-msg">No candidates starred yet. Star some candidates first, then share your ballot.</div>`;
+  }
+  document.getElementById('modalCopied').textContent='';
+  document.getElementById('modalOverlay').classList.add('show');
+}
+function copyShareUrl(){
+  const url=document.getElementById('shareUrl').value;
+  navigator.clipboard.writeText(url).then(()=>{
+    document.getElementById('modalCopied').textContent='✓ Copied to clipboard!';
+  });
+}
+function closeModal(){document.getElementById('modalOverlay').classList.remove('show');}
+
+function getAllCandidates(){
+  const all=[];
+  RACES.forEach(r=>{
+    if(Array.isArray(r.candidates))r.candidates.forEach(c=>all.push(c));
+    else Object.values(r.candidates).forEach(arr=>arr.forEach(c=>all.push(c)));
+  });
+  return all;
+}
+function loadPicksFromUrl(){
+  const hash=location.hash;
+  if(!hash.includes('picks='))return;
+  try{
+    const encoded=hash.split('picks=')[1];
+    const picks=JSON.parse(atob(encoded));
+    starred=new Set(picks);saveStars();
+    // Auto-load sample ballot to show the picks
+    loadSample();
+    setTimeout(()=>document.getElementById('ballotContent').scrollIntoView({behavior:'smooth'}),500);
+  }catch(e){}
+}
+
+// ═══════════════════════════════════════════════════
+// MINI MAP
+// ═══════════════════════════════════════════════════
+let currentMapT='congressional',mapSvg,mapG;
+
+function initMap(){
+  const el=document.getElementById('mini-map');
+  // Use the hero-map container's actual rendered size
+  const container=el.parentElement;
+  const W=container.clientWidth||280;
+  const H=container.clientHeight||200;
+  mapSvg=d3.select('#mini-map').attr('viewBox',`0 0 ${W} ${H}`).attr('width','100%').attr('height','100%');
+  mapG=mapSvg.append('g');
+  mapSvg.call(d3.zoom().scaleExtent([0.6,8]).on('zoom',e=>mapG.attr('transform',e.transform)));
+  drawMap();
+}
+
+function getDistricts(type){
+  if(type==='congressional'){return[
+    {id:'1',l:'CD-1',n:'Far North',x:178,y:52,w:132,h:92},{id:'2',l:'CD-2',n:'North Coast',x:68,y:72,w:112,h:88},
+    {id:'3',l:'CD-3',n:'Napa/Solano',x:118,y:152,w:108,h:72},{id:'4',l:'CD-4',n:'Sierra Foothills',x:228,y:138,w:116,h:82},
+    {id:'5',l:'CD-5',n:'Sacramento',x:182,y:218,w:108,h:74},{id:'6',l:'CD-6',n:'Sacramento sub.',x:282,y:202,w:98,h:72},
+    {id:'7',l:'CD-7',n:'Elk Grove',x:232,y:284,w:94,h:64},{id:'8',l:'CD-8',n:'Stockton',x:198,y:342,w:102,h:66},
+    {id:'9',l:'CD-9',n:'Modesto',x:208,y:402,w:98,h:64},{id:'10',l:'CD-10',n:'Merced/Turlock',x:208,y:460,w:94,h:64},
+    {id:'11',l:'CD-11',n:'Contra Costa',x:88,y:258,w:108,h:74},{id:'12',l:'CD-12',n:'San Francisco',x:66,y:298,w:64,h:64},
+    {id:'13',l:'CD-13',n:'Fresno',x:222,y:516,w:98,h:68},{id:'14',l:'CD-14',n:'Peninsula',x:70,y:348,w:84,h:74},
+    {id:'15',l:'CD-15',n:'East Bay',x:92,y:334,w:84,h:58},{id:'16',l:'CD-16',n:'Fresno/Kings',x:188,y:570,w:104,h:64},
+    {id:'17',l:'CD-17',n:'Silicon Valley',x:90,y:412,w:84,h:64},{id:'18',l:'CD-18',n:'South Bay',x:90,y:470,w:84,h:64},
+    {id:'19',l:'CD-19',n:'Monterey',x:92,y:526,w:94,h:68},{id:'20',l:'CD-20',n:'Bakersfield',x:208,y:618,w:116,h:68},
+    {id:'21',l:'CD-21',n:'Tulare/Visalia',x:272,y:566,w:94,h:64},{id:'22',l:'CD-22',n:'Kern County',x:266,y:630,w:104,h:68},
+    {id:'23',l:'CD-23',n:'SLO/Santa Barbara',x:122,y:582,w:94,h:74},{id:'24',l:'CD-24',n:'Santa Barbara',x:142,y:648,w:104,h:64},
+    {id:'25',l:'CD-25',n:'Antelope Valley',x:272,y:692,w:104,h:68},{id:'26',l:'CD-26',n:'Thousand Oaks',x:188,y:712,w:94,h:64},
+    {id:'27',l:'CD-27',n:'San Gabriel',x:312,y:742,w:84,h:64},{id:'28',l:'CD-28',n:'Burbank',x:282,y:798,w:84,h:58},
+    {id:'29',l:'CD-29',n:'East LA',x:242,y:808,w:84,h:58},{id:'30',l:'CD-30',n:'West LA',x:208,y:768,w:84,h:58},
+    {id:'31',l:'CD-31',n:'Pomona/Ontario',x:352,y:778,w:84,h:64},{id:'32',l:'CD-32',n:'Pasadena',x:352,y:728,w:78,h:58},
+    {id:'33',l:'CD-33',n:'Santa Monica',x:178,y:818,w:78,h:58},{id:'34',l:'CD-34',n:'Central LA',x:258,y:843,w:74,h:54},
+    {id:'35',l:'CD-35',n:'West Covina',x:362,y:828,w:78,h:58},{id:'36',l:'CD-36',n:'Long Beach',x:282,y:858,w:78,h:58},
+    {id:'37',l:'CD-37',n:'Inglewood',x:212,y:858,w:78,h:58},{id:'38',l:'CD-38',n:'Norwalk',x:322,y:858,w:74,h:58},
+    {id:'39',l:'CD-39',n:'Fullerton',x:382,y:828,w:78,h:58},{id:'40',l:'CD-40',n:'Whittier',x:382,y:863,w:74,h:58},
+    {id:'41',l:'CD-41',n:'Coachella Valley',x:422,y:788,w:94,h:68},{id:'42',l:'CD-42',n:'Riverside',x:412,y:858,w:84,h:64},
+    {id:'43',l:'CD-43',n:'San Bernardino',x:422,y:743,w:84,h:58},{id:'44',l:'CD-44',n:'Compton/Carson',x:262,y:898,w:78,h:54},
+    {id:'45',l:'CD-45',n:'Irvine/Newport',x:392,y:903,w:84,h:58},{id:'46',l:'CD-46',n:'Anaheim',x:352,y:898,w:84,h:58},
+    {id:'47',l:'CD-47',n:'Long Beach coast',x:302,y:908,w:74,h:54},{id:'48',l:'CD-48',n:'Laguna Beach',x:392,y:938,w:84,h:54},
+    {id:'49',l:'CD-49',n:'N.San Diego coast',x:332,y:968,w:94,h:58},{id:'50',l:'CD-50',n:'E.San Diego',x:432,y:948,w:94,h:64},
+    {id:'51',l:'CD-51',n:'San Diego/Chula Vista',x:352,y:1018,w:94,h:58},{id:'52',l:'CD-52',n:'San Diego central',x:302,y:1018,w:84,h:58},
+  ];}
+  if(type==='senate')return Array.from({length:40},(_,i)=>({id:String(i+1),l:`SD-${i+1}`,n:`Senate District ${i+1}`,x:55+((i%8)*66),y:72+Math.floor(i/8)*124,w:62,h:120}));
+  return Array.from({length:80},(_,i)=>({id:String(i+1),l:`AD-${i+1}`,n:`Assembly District ${i+1}`,x:55+((i%10)*55),y:72+Math.floor(i/10)*104,w:51,h:100}));
+}
+
+function drawMap(){
+  if(!mapG)return;
+  mapG.selectAll('*').remove();
+  const el=document.getElementById('mini-map');
+  const container=el.parentElement;
+  const W=container.clientWidth||280;
+  const H=container.clientHeight||200;
+  const D=getDistricts(currentMapT);
+  const maxX=Math.max(...D.map(d=>d.x+d.w)),maxY=Math.max(...D.map(d=>d.y+d.h));
+  const sc=Math.min((W-20)/maxX,(H-20)/maxY,1);
+  const g=mapG.append('g').attr('transform',`translate(${(W-maxX*sc)/2},10) scale(${sc})`);
+  const userD=myDist?.[currentMapT];
+  const rmap={congressional:'ushouse',senate:'state_senate',assembly:'assembly'};
+  const race=RACES.find(r=>r.id===rmap[currentMapT]);
+  D.forEach(d=>{
+    const isUser=userD===d.id;
+    const hasCands=race?.candidates?.[d.id];
+    const fill=isUser?'#BFDBFE':hasCands?'#EBF2FB':'#F2F5FB';
+    const stroke=isUser?'#2563A8':'#C5D0E0';
+    g.append('rect').attr('x',d.x).attr('y',d.y).attr('width',d.w).attr('height',d.h).attr('rx',2)
+     .attr('fill',fill).attr('stroke',stroke).attr('stroke-width',isUser?2:0.7).style('cursor','pointer')
+     .on('mouseover',function(e){
+       if(!isUser)d3.select(this).attr('fill','#DBEAFE');
+       const tip=document.getElementById('ttip');tip.style.display='block';
+       tip.style.left=(e.clientX+10)+'px';tip.style.top=(e.clientY-24)+'px';
+       tip.textContent=d.n+(hasCands?` · ${race.candidates[d.id].length} candidates`:'');
+     })
+     .on('mousemove',e=>{const tip=document.getElementById('ttip');tip.style.left=(e.clientX+10)+'px';tip.style.top=(e.clientY-24)+'px';})
+     .on('mouseout',function(){d3.select(this).attr('fill',fill);document.getElementById('ttip').style.display='none';});
+    const fs=currentMapT==='assembly'?7.5:currentMapT==='senate'?8:8.5;
+    g.append('text').attr('x',d.x+d.w/2).attr('y',d.y+d.h/2).attr('text-anchor','middle').attr('dominant-baseline','middle')
+     .attr('font-size',fs).attr('font-weight',isUser?'600':'400').attr('fill',isUser?'#1D4ED8':'#2E4270').attr('pointer-events','none').text(d.l);
+  });
+  document.getElementById('mapLabel').textContent=userD
+    ?`Your district: ${currentMapT==='congressional'?'CD':currentMapT==='senate'?'SD':'AD'}-${userD} (highlighted in blue)`
+    :'Hover a district · enter address to highlight yours';
+}
+
+function setMapType(type,btn){
+  currentMapT=type;
+  if(btn){document.querySelectorAll('.mpill').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+  drawMap();
+}
+
+// ═══════════════════════════════════════════════════
+// BROWSE ALL ELECTIONS
+// ═══════════════════════════════════════════════════
+let activeRaceId=null,activeDist=null;
+
+function initBrowse(){
+  const nav=document.getElementById('raceTopNav');
+  // Statewide section
+  const swDiv=document.createElement('div');swDiv.className='rnav-section';
+  const swLbl=document.createElement('span');swLbl.className='rnav-divider';swLbl.textContent='Statewide';swDiv.appendChild(swLbl);
+  RACES.filter(r=>r.type==='statewide').forEach(race=>{
+    const b=document.createElement('button');b.className='rnav-btn';b.dataset.id=race.id;
+    b.textContent=race.name;b.onclick=()=>selectBrowseRace(race.id);swDiv.appendChild(b);
+  });
+  nav.appendChild(swDiv);
+  // District section
+  const drDiv=document.createElement('div');drDiv.className='rnav-section';
+  const drLbl=document.createElement('span');drLbl.className='rnav-divider';drLbl.textContent='District';drDiv.appendChild(drLbl);
+  RACES.filter(r=>r.type==='district').forEach(race=>{
+    const b=document.createElement('button');b.className='rnav-btn';b.dataset.id=race.id;
+    b.textContent=race.name;b.onclick=()=>selectBrowseRace(race.id);drDiv.appendChild(b);
+  });
+  nav.appendChild(drDiv);
+
+  // District filter tabs
+  const distRaces=RACES.filter(r=>r.type==='district');
+  const allD=[...new Set(distRaces.flatMap(r=>Object.keys(r.candidates)))].sort((a,b)=>+a-+b);
+  const ft=document.getElementById('filterTabs');
+  ['all',...allD].forEach(d=>{
+    const t=document.createElement('button');t.className='ftab'+(d==='all'?' active':'');
+    t.textContent=d==='all'?'All districts':'Dist. '+d;
+    t.onclick=()=>{document.querySelectorAll('.ftab').forEach(x=>x.classList.remove('active'));t.classList.add('active');activeDist=d==='all'?null:d;if(activeRaceId){const r=RACES.find(x=>x.id===activeRaceId);if(r&&r.type==='district')renderBrowse(r);}};
+    ft.appendChild(t);
+  });
+}
+
+function selectBrowseRace(id){
+  activeRaceId=id;
+  document.querySelectorAll('.rnav-btn').forEach(b=>b.classList.toggle('active',b.dataset.id===id));
+  const race=RACES.find(r=>r.id===id);
+  if(!race)return;
+  const isDistrict=race.type==='district';
+  document.getElementById('browseFilterBar').style.display=isDistrict?'flex':'none';
+  renderBrowse(race);
+  // Scroll to top of browse body
+  document.getElementById('browseBody').scrollTop=0;
+}
+
+function renderBrowse(race){
+  document.getElementById('browseWelcome').style.display='none';
+  document.getElementById('browseContent').style.display='block';
+  document.getElementById('browseContent').innerHTML='';
+  const hdr=document.createElement('div');hdr.className='browse-panel-hdr';
+  hdr.innerHTML=`<h2>${race.name}</h2><div class="bdesc">${race.desc}</div><div class="bexpl">${race.expl||''}</div>`;
+  document.getElementById('browseContent').appendChild(hdr);
+
+  if(Array.isArray(race.candidates)){
+    const multi=race.candidates.length>1;
+    const grid=document.createElement('div');grid.className=`candidates-grid ${multi?'multi':'single'}`;
+    race.candidates.forEach(c=>grid.insertAdjacentHTML('beforeend',buildCardHTML(c)));
+    document.getElementById('browseContent').appendChild(grid);
+  } else {
+    const note=document.createElement('div');note.className='browse-district-note';
+    const allD=Object.keys(race.candidates).sort((a,b)=>+a-+b);
+    if(activeDist&&race.candidates[activeDist]){
+      note.className='browse-district-note show';
+      note.textContent=`📍 ${race.districtLabel} ${activeDist}. Use the district filter above to switch.`;
+      document.getElementById('browseContent').appendChild(note);
+      const multi=race.candidates[activeDist].length>1;
+      const grid=document.createElement('div');grid.className=`candidates-grid ${multi?'multi':'single'}`;
+      race.candidates[activeDist].forEach(c=>grid.insertAdjacentHTML('beforeend',buildCardHTML(c)));
+      document.getElementById('browseContent').appendChild(grid);
+    } else {
+      note.className='browse-district-note show';
+      note.textContent=`📍 Showing all sample districts. Use the district filter above to narrow down.`;
+      document.getElementById('browseContent').appendChild(note);
+      allD.forEach(d=>{
+        const divider=document.createElement('div');divider.className='browse-dist-divider';
+        divider.textContent=`${race.districtLabel} ${d}`;
+        document.getElementById('browseContent').appendChild(divider);
+        const cands=race.candidates[d];const multi=cands.length>1;
+        const grid=document.createElement('div');grid.className=`candidates-grid ${multi?'multi':'single'}`;
+        cands.forEach(c=>grid.insertAdjacentHTML('beforeend',buildCardHTML(c)));
+        document.getElementById('browseContent').appendChild(grid);
+      });
+    }
+  }
+  document.getElementById('browseContent').insertAdjacentHTML('beforeend','<div class="data-note" style="margin-top:1.5rem">⚠️ <strong>Prototype:</strong> All candidate data is illustrative sample data. Live version uses FPPC/FEC filings and nonpartisan journalism. No editorial stance taken.</div>');
+}
+
+function updatePrintPicks(){
+  const el=document.getElementById('printPicksList');
+  if(!el) return;
+  if(!starred.size){
+    el.innerHTML='<div class="print-no-picks">No candidates starred yet. Star candidates on your ballot to include them here.</div>';
+    return;
+  }
+  const rows=[];
+  RACES.forEach(race=>{
+    const cands=Array.isArray(race.candidates)?race.candidates:Object.values(race.candidates).flat();
+    cands.forEach(c=>{
+      if(starred.has(c.id)){
+        rows.push(`<div class="print-pick-row">
+          <span class="print-pick-office">${race.name}</span>
+          <span class="print-pick-name">${c.name}</span>
+          <span class="print-pick-detail">${PL[c.party]} · ${c.role}</span>
+        </div>`);
+      }
+    });
+  });
+  el.innerHTML=rows.join('');
+}
+
+function searchBallot(){
+  const q=document.getElementById('ballotSearch')?.value.toLowerCase()||'';
+  document.querySelectorAll('#ballotContent .candidate-card').forEach(card=>{
+    const name=card.querySelector('.cname')?.textContent.toLowerCase()||'';
+    const role=card.querySelector('.crole')?.textContent.toLowerCase()||'';
+    card.style.display=(!q||name.includes(q)||role.includes(q))?'':'none';
+  });
+}
+
+function searchBrowse(){
+  const q=document.getElementById('browseSearch')?.value.toLowerCase()||'';
+  document.querySelectorAll('#browseContent .candidate-card').forEach(card=>{
+    const name=card.querySelector('.cname')?.textContent.toLowerCase()||'';
+    card.style.display=name.includes(q)||!q?'':'none';
+  });
+}
+
+// ═══════════════════════════════════════════════════
+// BACK TO TOP + SCROLL
+// ═══════════════════════════════════════════════════
+window.addEventListener('scroll',()=>{
+  document.getElementById('backToTop').classList.toggle('show',window.scrollY>400);
+});
+function scrollToTop(){
+  // Scroll to the quicknav jump bar, not the very top of the page
+  const qnav=document.getElementById('ballotQuicknav');
+  if(qnav){
+    const top=qnav.getBoundingClientRect().top+window.scrollY-120;
+    window.scrollTo({top,behavior:'smooth'});
+  } else {
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+}
+
+// ═══════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════
+initBrowse();
+window.addEventListener('load',()=>setTimeout(initMap,100));
+window.addEventListener('resize',()=>{
+  if(mapG){
+    const el=document.getElementById('mini-map');
+    const c=el.parentElement;
+    mapSvg.attr('viewBox',`0 0 ${c.clientWidth} ${c.clientHeight}`);
+    drawMap();
+  }
+});
+loadPicksFromUrl();
+</script>
+</body>
+</html>
