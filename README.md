@@ -8,13 +8,13 @@ An interactive, nonpartisan voter guide for California's 2026 primary election. 
 
 ## Why this exists
 
-The current voting experience can feel overwhelming, confusing, or too time-consuming. It's difficult for voters to navigate aspects like what district they're in, what offices they need to research, what information is actually relevant for them, how to remember their picks, and more - causing many to skip the polls entirely. This guide attempts to fix that by combining everything into one visual, address-first experience.
+The current voting experience can feel overwhelming, confusing, or too time-consuming. It's difficult for voters to navigate aspects such as figuring out what district they're in, what offices they need to research, what information is actually relevant for them, how to remember their picks, and more - causing many to skip the polls entirely. This guide attempts to fix that by combining everything into one visual, address-first experience.
 
 ---
 
 ## Features
 
-- **Address lookup:** enter any California address to identify your congressional, state senate, and assembly districts via the Google Civic Information API. See only the elections on your specific ballot.
+- **Address lookup:** enter any California address to identify your congressional, state senate, and assembly districts via the U.S. Census Bureau Geocoding API. See only the elections on your specific ballot.
 - **Visual district map:** highlights your district in blue across Congressional, State Senate, and Assembly views. Zoomable and pannable.
 - **Candidate profiles:** summarized policy stances, endorsements, and a breakdown of top funding sources.
 - **Office explainers:** plain-language one-liners for every office on your ballot (e.g. what does the State Assemblymember actually do?).
@@ -43,7 +43,7 @@ No editorial stance is taken on any candidate.
 
 - HTML, CSS, and JavaScript
 - [D3.js](https://d3js.org/) for the district map
-- Google [Civic Information API](https://developers.google.com/civic-information) for address-to-district lookup, with U.S. Census Bureau [Geocoding API](https://geocoding.geo.census.gov/geocoder/) as fallback
+- U.S. Census Bureau [Geocoding API](https://geocoding.geo.census.gov/geocoder/) for address-to-district lookup, using JSONP to support browser-based requests without a backend
 - GitHub Pages for hosting
 
 ---

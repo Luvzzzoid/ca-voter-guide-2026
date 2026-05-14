@@ -7,13 +7,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
 
-<script>
-(async()=>{
-  const{PlaceAutocompleteElement}=await google.maps.importLibrary('places');
-  window._PlaceAutocompleteElement=PlaceAutocompleteElement;
-})().catch(()=>{});
-</script>
-<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC5E2-adnG5MnqFWOgNGQQneb8oL3InwW4&loading=async&libraries=places" async defer onload="initPlacesAutocomplete()"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 html{overflow-x:hidden}
@@ -56,12 +49,13 @@ html,body{font-family:'DM Sans',sans-serif;background:#F0F2F7;color:var(--text);
 .print-header-title{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--navy)}
 .print-header-sub{font-size:0.7rem;color:var(--muted);margin-top:2px}
 
-/* Google Places autocomplete dropdown styling */
-.pac-container{font-family:'DM Sans',sans-serif;font-size:0.8rem;border:1px solid var(--border);border-radius:5px;box-shadow:0 4px 12px rgba(27,42,74,0.1);margin-top:2px}
-.pac-item{padding:6px 10px;cursor:pointer;color:var(--text)}
-.pac-item:hover{background:var(--navy-light)}
-.pac-item-query{font-size:0.8rem;color:var(--navy)}
-.pac-matched{font-weight:500}
+/* Custom address autocomplete dropdown */
+.addr-suggestions{position:absolute;top:100%;left:0;right:0;background:var(--white);border:1px solid var(--border);border-top:none;border-radius:0 0 5px 5px;box-shadow:0 4px 12px rgba(27,42,74,0.1);z-index:200;max-height:200px;overflow-y:auto;display:none}
+.addr-suggestions.open{display:block}
+.addr-suggestion{padding:8px 12px;font-size:0.8rem;cursor:pointer;color:var(--text);border-bottom:1px solid var(--border)}
+.addr-suggestion:last-child{border-bottom:none}
+.addr-suggestion:hover,.addr-suggestion.focused{background:var(--navy-light);color:var(--navy)}
+.addr-suggestion strong{color:var(--navy);font-weight:500}
 
 /* ── HEADER ── */
 header{background:var(--navy);color:#fff;padding:0 2rem;display:flex;align-items:center;justify-content:space-between;height:56px;border-bottom:3px solid var(--gold);position:sticky;top:0;z-index:300}
@@ -85,9 +79,10 @@ header{background:var(--navy);color:#fff;padding:0 2rem;display:flex;align-items
 ════════════════════════════════ */
 
 /*
+  HERO: single left column, full width.
   Stacks top to bottom: Find My Ballot form → Map → Your Ballot summary.
-  Fixed widths so stable at any screen size.
-  Max-width constrains it on very wide screens so it doesn't sprawl.
+  Fixed widths keep it stable at any screen size.
+  Max-width constrains it on very wide screens.
 */
 .ballot-hero{
   background:var(--white);
@@ -110,7 +105,7 @@ header{background:var(--navy);color:#fff;padding:0 2rem;display:flex;align-items
 .hero-addr h2{font-family:'Playfair Display',serif;font-size:1rem;color:var(--navy);margin-bottom:3px}
 .hero-addr .sub{font-size:0.71rem;color:var(--muted);line-height:1.45;margin-bottom:10px}
 .addr-row{display:flex;gap:5px;margin-bottom:5px}
-.addr-row input{flex:1;min-width:0;padding:7px 9px;font-size:0.78rem;border:1px solid var(--border);border-radius:5px;font-family:'DM Sans',sans-serif;color:var(--text);transition:border-color 0.15s}
+.addr-row input{flex:1;min-width:0;width:100%;padding:7px 9px;font-size:0.78rem;border:1px solid var(--border);border-radius:5px;font-family:'DM Sans',sans-serif;color:var(--text);transition:border-color 0.15s}
 .addr-row input:focus{outline:none;border-color:var(--navy-mid);box-shadow:0 0 0 2px rgba(46,66,112,0.08)}
 .go-btn{padding:7px 14px;background:var(--navy);color:#fff;border:none;border-radius:5px;font-size:0.76rem;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;flex-shrink:0}
 .go-btn:hover{background:var(--navy-mid)}
@@ -125,7 +120,7 @@ header{background:var(--navy);color:#fff;padding:0 2rem;display:flex;align-items
 .dchip{font-size:0.69rem;padding:3px 9px;border-radius:12px;background:var(--navy-light);color:var(--navy-mid);border:1px solid var(--border);cursor:pointer;transition:all 0.12s}
 .dchip.active{background:var(--navy);color:#fff;border-color:var(--navy)}
 
-/* Section 2: map - fixed pixel height */
+/* Section 2: map - fixed pixel height, doesn't grow or shrink */
 .hero-map{
   height:240px;
   flex-shrink:0;
@@ -184,7 +179,7 @@ header{background:var(--navy);color:#fff;padding:0 2rem;display:flex;align-items
 .ballot-welcome .cta{padding:9px 20px;background:var(--navy);color:#fff;border:none;border-radius:5px;font-size:0.8rem;cursor:pointer;font-family:'DM Sans',sans-serif}
 
 /* Ballot summary box */
-/* Ballot quick-nav - race jump bar above candidates */
+/* Ballot quick-nav - election jump bar above candidates */
 .ballot-quicknav{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:8px 10px;margin-bottom:1rem;display:flex;flex-wrap:wrap;gap:4px;align-items:center}
 .bqnav-label{font-size:0.65rem;font-weight:500;color:var(--gold);letter-spacing:0.09em;text-transform:uppercase;margin-right:4px;white-space:nowrap}
 .bqnav-btn{padding:4px 11px;font-size:0.73rem;color:var(--muted);border:1px solid var(--border);background:var(--surface);border-radius:4px;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:all 0.12s}
@@ -221,7 +216,7 @@ header{background:var(--navy);color:#fff;padding:0 2rem;display:flex;align-items
 .p-npp{background:var(--npp-bg);color:var(--npp)}
 .crole{font-size:0.73rem;color:var(--muted);margin-top:2px;word-break:break-word}
 
-/* Star button - anchored to card */
+/* Star button - anchored to card, doesn't clip */
 .star-btn{position:absolute;top:10px;right:10px;background:none;border:1px solid var(--star-empty);border-radius:50%;width:30px;height:30px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all 0.15s;color:var(--star-empty);flex-shrink:0;z-index:1}
 .star-btn:hover{border-color:var(--star);background:var(--gold-pale)}
 .star-btn.on{border-color:var(--star);background:var(--gold-pale);color:var(--star)}
@@ -343,10 +338,14 @@ header{background:var(--navy);color:#fff;padding:0 2rem;display:flex;align-items
     <div class="hero-addr">
       <h2>Find my ballot</h2>
       <p class="sub">Enter the California address where you are registered to vote to see only the elections on your ballot. Star the candidates you like.</p>
-      <div class="addr-row">
-        <input id="addrInput" type="text" placeholder="Enter your registered address">
+      <div class="addr-row" style="position:relative">
+        <div style="flex:1;position:relative;min-width:0">
+          <input id="addrInput" type="text" placeholder="Street address, City, CA" autocomplete="off" oninput="onAddrInput()" onkeydown="onAddrKey(event)">
+          <div class="addr-suggestions" id="addrSuggestions"></div>
+        </div>
         <button class="go-btn" onclick="lookupAddress()">Go</button>
       </div>
+      <div style="font-size:0.69rem;color:var(--muted);margin-bottom:4px">e.g. 123 Main St, Sacramento, CA</div>
       <div class="addr-status" id="addrStatus"></div>
       <button class="sample-link" onclick="loadSample()">Try a sample ballot (Sacramento, CA-5)</button>
       <div style="font-size:0.67rem;color:var(--muted);margin-top:6px">You cannot cast a vote with this tool.</div>
@@ -369,7 +368,7 @@ header{background:var(--navy);color:#fff;padding:0 2rem;display:flex;align-items
       <div class="summary-top">
         <div class="stitle">Your Ballot</div>
         <div id="summaryStats">
-          <div style="font-size:0.76rem;color:var(--muted);line-height:1.6;margin-top:4px">Enter your address to see your elections.</div>
+          <div style="font-size:0.76rem;color:var(--muted);line-height:1.6;margin-top:4px">Enter your address to see your races.</div>
         </div>
       </div>
       <div id="summaryActions" style="display:none">
@@ -396,7 +395,7 @@ header{background:var(--navy);color:#fff;padding:0 2rem;display:flex;align-items
     <div class="ballot-welcome" id="ballotWelcome">
       <div class="icon">🗳</div>
       <h3>Your personalized ballot</h3>
-      <p>Enter your California address above and we'll show you only the elections on your specific ballot, from Governor all the way down to your Assembly district.</p>
+      <p>Enter your California address above and we'll show you only the elections on your specific ballot, from Governor all the way to your Assembly district.</p>
       <button class="cta" onclick="loadSample()">Try a sample ballot →</button>
     </div>
     <div id="ballotContent" style="display:none"></div>
@@ -598,12 +597,99 @@ function switchPage(id,btn){
 // MY BALLOT
 // ═══════════════════════════════════════════════════
 // ═══════════════════════════════════════════════════
-// ADDRESS LOOKUP
-// Google Civic Information API (primary)
-// Falls back to Census Bureau API if Google fails
+// ADDRESS AUTOCOMPLETE (no API version - CA cities)
 // ═══════════════════════════════════════════════════
-const GOOGLE_API_KEY = 'AIzaSyC5E2-adnG5MnqFWOgNGQQneb8oL3InwW4';
+const CA_CITIES = [
+  'Alameda','Alhambra','Anaheim','Antioch','Apple Valley','Bakersfield','Baldwin Park',
+  'Bellflower','Berkeley','Buena Park','Burbank','Camarillo','Carson','Chico','Chino',
+  'Chino Hills','Chula Vista','Citrus Heights','Clovis','Compton','Concord','Corona',
+  'Costa Mesa','Daly City','Davis','Downey','El Cajon','El Monte','Elk Grove',
+  'Escondido','Fairfield','Fontana','Fremont','Fresno','Fullerton','Garden Grove',
+  'Glendale','Hayward','Hemet','Hesperia','Huntington Beach','Inglewood','Irvine',
+  'Lancaster','Livermore','Long Beach','Los Angeles','Menifee','Merced','Mission Viejo',
+  'Modesto','Moreno Valley','Murrieta','Norwalk','Oakland','Oceanside','Ontario',
+  'Orange','Oxnard','Palmdale','Pasadena','Pomona','Rancho Cucamonga','Redding',
+  'Rialto','Richmond','Riverside','Roseville','Sacramento','Salinas','San Bernardino',
+  'San Buenaventura','San Diego','San Francisco','San Jose','San Mateo','Santa Ana',
+  'Santa Barbara','Santa Clara','Santa Clarita','Santa Maria','Santa Rosa','Simi Valley',
+  'South Gate','Stockton','Sunnyvale','Temecula','Thousand Oaks','Torrance','Tracy',
+  'Turlock','Vacaville','Vallejo','Ventura','Victorville','Visalia','West Covina',
+  'Westminster','Whittier'
+];
 
+let suggestionIndex = -1;
+
+function onAddrInput(){
+  const val = document.getElementById('addrInput').value.trim();
+  const box = document.getElementById('addrSuggestions');
+  if(val.length < 2){ box.classList.remove('open'); box.innerHTML=''; return; }
+
+  // Extract what looks like a city name (text after last comma, or last word group)
+  const parts = val.split(',');
+  const lastPart = parts[parts.length-1].trim().toLowerCase();
+  const streetPart = parts.slice(0,-1).join(',').trim() || val;
+
+  // Match CA cities
+  const matches = CA_CITIES.filter(c=>c.toLowerCase().startsWith(lastPart) && lastPart.length>1)
+    .slice(0,6);
+
+  if(!matches.length || lastPart.length < 2){ box.classList.remove('open'); box.innerHTML=''; return; }
+
+  suggestionIndex = -1;
+  box.innerHTML = matches.map((city,i)=>{
+    // Build the full suggested address
+    const suggestion = parts.length > 1
+      ? `${parts.slice(0,-1).join(',').trim()}, ${city}, CA`
+      : `${city}, CA`;
+    return `<div class="addr-suggestion" data-val="${suggestion}" onmousedown="selectSuggestion('${suggestion.replace(/'/g,"\\'")}')">
+      ${parts.length > 1 ? `<strong>${parts.slice(0,-1).join(',').trim()},</strong> ${city}, CA` : `${city}, CA`}
+    </div>`;
+  }).join('');
+  box.classList.add('open');
+}
+
+function selectSuggestion(val){
+  document.getElementById('addrInput').value = val;
+  document.getElementById('addrSuggestions').classList.remove('open');
+  suggestionIndex = -1;
+  lookupAddress();
+}
+
+function onAddrKey(e){
+  const box = document.getElementById('addrSuggestions');
+  const items = box.querySelectorAll('.addr-suggestion');
+  if(!items.length) return;
+  if(e.key==='ArrowDown'){
+    e.preventDefault();
+    suggestionIndex=Math.min(suggestionIndex+1,items.length-1);
+    items.forEach((el,i)=>el.classList.toggle('focused',i===suggestionIndex));
+  } else if(e.key==='ArrowUp'){
+    e.preventDefault();
+    suggestionIndex=Math.max(suggestionIndex-1,-1);
+    items.forEach((el,i)=>el.classList.toggle('focused',i===suggestionIndex));
+  } else if(e.key==='Enter'){
+    if(suggestionIndex>=0 && items[suggestionIndex]){
+      const val=items[suggestionIndex].dataset.val;
+      selectSuggestion(val);
+    } else {
+      box.classList.remove('open');
+      lookupAddress();
+    }
+  } else if(e.key==='Escape'){
+    box.classList.remove('open');
+  }
+}
+
+// Close suggestions when clicking outside
+document.addEventListener('click', e=>{
+  if(!e.target.closest('#addrInput') && !e.target.closest('#addrSuggestions')){
+    document.getElementById('addrSuggestions')?.classList.remove('open');
+  }
+});
+
+// ═══════════════════════════════════════════════════
+// ADDRESS LOOKUP
+// ═══════════════════════════════════════════════════
 let myDist = null;
 
 function loadSample(){
@@ -612,51 +698,15 @@ function loadSample(){
   renderBallot(); renderDistChips(); drawMap();
 }
 
-// Places autocomplete - called by Google script callback
-// Uses PlaceAutocompleteElement 
-function initPlacesAutocomplete(){
-  if(!window.google?.maps?.places) return;
-  const input = document.getElementById('addrInput');
-  const container = input.parentElement;
-
-  // PlaceAutocompleteElement 
-  google.maps.importLibrary('places').then(({PlaceAutocompleteElement})=>{
-    const el = new PlaceAutocompleteElement({
-      componentRestrictions: {country: 'us'},
-      types: ['address'],
-    });
-
-    // Style to match input
-    el.style.cssText='position:absolute;top:100%;left:0;right:0;z-index:999;margin-top:2px';
-    container.style.position='relative';
-    container.appendChild(el);
-
-    // Wire the element to address input
-    el.addEventListener('gmp-placeselect', async(e)=>{
-      const place = e.placePrediction.toPlace();
-      await place.fetchFields({fields:['formattedAddress']});
-      input.value = place.formattedAddress;
-      lookupAddress();
-    });
-
-    // Forward typing from input to the autocomplete element
-    input.addEventListener('input', ()=>{
-      el.value = input.value;
-    });
-  }).catch(err=>{
-    // If Places fails, the manual input + lookup still works fine
-    console.warn('Places autocomplete unavailable:', err);
-  });
-}
-
 async function lookupAddress(){
   const addr = document.getElementById('addrInput').value.trim();
   if(!addr){setAddrStatus('Please enter your registered address.','err');return;}
-  setAddrStatus('Looking up your districts…','');
-  // Try Google Civic first, fall back to Census
-  const result = await lookupWithGoogle(addr) || await lookupWithCensus(addr);
+  setAddrStatus('Looking up your districts...','');
+  document.getElementById('addrSuggestions')?.classList.remove('open');
+
+  const result = await lookupWithCensus(addr);
   if(!result){
-    setAddrStatus('Address not found. Try including your city and zip code.','err');
+    setAddrStatus('Address not found. Try a full address like "123 Main St, Sacramento, CA"','err');
     return;
   }
   myDist = result;
@@ -668,60 +718,42 @@ async function lookupAddress(){
   renderBallot(); renderDistChips(); drawMap();
 }
 
-async function lookupWithGoogle(addr){
-  try{
-    // Google Civic Information API - divisionsByAddress
-    // Returns OCD division IDs like ocd-division/country:us/state:ca/cd:13
-    const cleanAddr = addr.replace(/,+/g,',').replace(/,\s*,/g,',').trim();
-    const url=`https://civicinfo.googleapis.com/civicinfo/v2/representatives?address=${encodeURIComponent(cleanAddr)}&key=${GOOGLE_API_KEY}&includeOffices=false`;
-    const res = await fetch(url);
-    if(!res.ok){
-      console.warn(`Google Civic API returned ${res.status}. Check that Civic Information API is enabled in Google Cloud Console.`);
-      return null;
-    }
-    const data = await res.json();
-    if(data.error || !data.divisions) return null;
-
-    let congressional=null, senate=null, assembly=null;
-    Object.keys(data.divisions).forEach(ocd=>{
-      // Congressional: ocd-division/country:us/state:ca/cd:13
-      const cdMatch = ocd.match(/\/cd:(\d+)$/);
-      if(cdMatch) congressional = String(parseInt(cdMatch[1]));
-      // State Senate: ocd-division/country:us/state:ca/sldu:3
-      const ssMatch = ocd.match(/\/sldu:(\d+)$/);
-      if(ssMatch) senate = String(parseInt(ssMatch[1]));
-      // State Assembly: ocd-division/country:us/state:ca/sldl:4
-      const saMatch = ocd.match(/\/sldl:(\d+)$/);
-      if(saMatch) assembly = String(parseInt(saMatch[1]));
-    });
-
-    if(!congressional && !senate && !assembly) return null;
-    return {congressional, senate, assembly};
-  }catch(e){
-    console.warn('Google Civic lookup failed, trying Census fallback:', e);
-    return null;
-  }
-}
-
 async function lookupWithCensus(addr){
-  try{
-    const url=`https://geocoding.geo.census.gov/geocoder/geographies/onelineaddress?address=${encodeURIComponent(addr+', CA')}&benchmark=Public_AR_Current&vintage=Current_Current&layers=all&format=json`;
-    const data=await(await fetch(url)).json();
-    const matches=data?.result?.addressMatches;
-    if(!matches?.length) return null;
-    const geo=matches[0].geographies;
-    const cdG=geo['119th Congressional Districts']||geo['118th Congressional Districts']||geo['Congressional Districts'];
-    const ssG=geo['State Legislative Districts - Upper'];
-    const saG=geo['State Legislative Districts - Lower'];
-    const congressional=cdG?.[0]?String(parseInt(cdG[0].BASENAME||cdG[0].NAME)):null;
-    const senate=ssG?.[0]?String(parseInt(ssG[0].BASENAME||ssG[0].NAME)):null;
-    const assembly=saG?.[0]?String(parseInt(saG[0].BASENAME||saG[0].NAME)):null;
-    if(!congressional && !senate && !assembly) return null;
-    return {congressional, senate, assembly};
-  }catch(e){
-    console.warn('Census fallback also failed:', e);
-    return null;
-  }
+  // Census geocoder using JSONP - their official browser-compatible method
+  // JSONP bypasses CORS entirely since it uses a script tag instead of fetch
+  return new Promise((resolve)=>{
+    const callbackName = 'censusCallback_' + Date.now();
+    const script = document.createElement('script');
+    const cleanAddr = (addr.toLowerCase().includes(', ca') ? addr : addr + ', CA')
+      .replace(/,+/g, ',').trim();
+
+    window[callbackName] = function(data){
+      // Clean up
+      delete window[callbackName];
+      document.head.removeChild(script);
+      try{
+        const matches = data?.result?.addressMatches;
+        if(!matches?.length){ resolve(null); return; }
+        const geo = matches[0].geographies;
+        const cdG = geo['119th Congressional Districts'] ||
+                    geo['118th Congressional Districts'] ||
+                    geo['Congressional Districts'];
+        const ssG = geo['State Legislative Districts - Upper'];
+        const saG = geo['State Legislative Districts - Lower'];
+        const congressional = cdG?.[0] ? String(parseInt(cdG[0].BASENAME||cdG[0].NAME)) : null;
+        const senate        = ssG?.[0] ? String(parseInt(ssG[0].BASENAME||ssG[0].NAME)) : null;
+        const assembly      = saG?.[0] ? String(parseInt(saG[0].BASENAME||saG[0].NAME)) : null;
+        if(!congressional && !senate && !assembly){ resolve(null); return; }
+        resolve({congressional, senate, assembly});
+      }catch(e){ resolve(null); }
+    };
+
+    script.onerror = ()=>{ delete window[callbackName]; document.head.removeChild(script); resolve(null); };
+    script.src = `https://geocoding.geo.census.gov/geocoder/geographies/onelineaddress?address=${encodeURIComponent(cleanAddr)}&benchmark=Public_AR_Current&vintage=Current_Current&layers=all&format=jsonp&callback=${callbackName}`;
+    // Timeout after 8 seconds
+    setTimeout(()=>{ if(window[callbackName]){ delete window[callbackName]; try{document.head.removeChild(script);}catch(e){} resolve(null); } }, 8000);
+    document.head.appendChild(script);
+  });
 }
 
 document.getElementById('addrInput').addEventListener('keydown',e=>{if(e.key==='Enter')lookupAddress();});
@@ -760,7 +792,7 @@ function renderBallot(){
   const totalC=swRaces.reduce((s,r)=>s+r.candidates.length,0)+distRaces.reduce((s,{race,dn})=>s+race.candidates[dn].length,0);
   const totalR=swRaces.length+distRaces.length;
 
-  // Summary panel 
+  // Summary panel - counts on top, district numbers in a separate block below
   const distNumsHTML = (myDist.congressional||myDist.senate||myDist.assembly) ? `
     <div class="summary-dist-block">
       <div class="summary-dist-label">Your districts</div>
@@ -781,7 +813,7 @@ function renderBallot(){
   document.getElementById('printDistricts').innerHTML=
     `CD-${myDist.congressional||'?'} · SD-${myDist.senate||'?'} · AD-${myDist.assembly||'?'}`;
 
-  // Quick-nav entries
+  // Build quick-nav entries
   const allBallotRaces=[
     ...swRaces.map(r=>({id:r.id,label:r.name,distNum:null})),
     ...distRaces.map(({race,dn})=>({id:race.id,label:race.name,distNum:dn}))
