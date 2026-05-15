@@ -32,9 +32,13 @@ html,body{font-family:'DM Sans',sans-serif;background:#F0F2F7;color:var(--text);
   .picks-print-note{display:none!important}
   .print-only{display:flex!important}
   .print-picks{display:block!important}
-  body,#page-ballot{background:#fff}
+  body,#page-ballot{background:#fff;font-size:14pt}
   .ballot-body{padding:0!important}
   .print-header{display:flex!important}
+  .print-pick-office{font-size:12pt;min-width:180px}
+  .print-pick-name{font-size:12pt}
+  .print-pick-detail{font-size:11pt}
+  .print-picks-title{font-size:16pt;margin-bottom:14px}
 }
 .print-only{display:none}
 /* Print picks block - only visible when printing */
@@ -242,6 +246,9 @@ header{background:var(--navy);color:#fff;padding:0 2rem;display:flex;align-items
 .picks-print-note.has-picks{display:block}
 
 /* data note */
+.other-candidates{margin-top:8px;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:5px;font-size:0.76rem;color:var(--muted)}
+.other-candidates strong{color:var(--navy-mid);display:block;margin-bottom:4px;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.06em}
+.other-candidates span{display:inline-block;margin-right:8px;margin-bottom:2px}
 .data-note{font-size:0.69rem;color:var(--muted);padding:8px 12px;background:var(--white);border:1px solid var(--border);border-radius:5px;line-height:1.5;margin-top:1.5rem}
 
 /* ════════════════════════════════
@@ -348,7 +355,7 @@ header{background:var(--navy);color:#fff;padding:0 2rem;display:flex;align-items
       <div style="font-size:0.69rem;color:var(--muted);margin-bottom:4px">e.g. 123 Main St, Sacramento, CA</div>
       <div class="addr-status" id="addrStatus"></div>
       <button class="sample-link" onclick="loadSample()">Try a sample ballot (Sacramento, CA-5)</button>
-      <div style="font-size:0.67rem;color:var(--muted);margin-top:6px">You cannot cast a vote with this tool.</div>
+      <div style="font-size:0.67rem;color:var(--muted);margin-top:6px">Your address is not stored or shared. You cannot cast a vote with this tool.</div>
       <div class="dist-chips" id="distChips"></div>
     </div>
 
@@ -409,10 +416,10 @@ header{background:var(--navy);color:#fff;padding:0 2rem;display:flex;align-items
   <div class="race-topnav no-print">
     <div class="race-topnav-inner" id="raceTopNav"></div>
   </div>
-  <div class="browse-filter-bar no-print" id="browseFilterBar" style="display:none">
-    <span class="filter-label">Filter by district:</span>
+  <div class="browse-filter-bar no-print" id="browseFilterBar">
+    <span class="filter-label" id="distFilterLabel" style="display:none">Filter by district:</span>
     <div class="filter-tabs" id="filterTabs"></div>
-    <div class="browse-search"><input type="text" id="browseSearch" placeholder="Search candidates…" oninput="searchBrowse()"></div>
+    <div class="browse-search" style="margin-left:auto"><input type="text" id="browseSearch" placeholder="Search candidates…" oninput="searchBrowse()"></div>
   </div>
   <div class="browse-body" id="browseBody">
     <div class="browse-welcome" id="browseWelcome">
@@ -456,6 +463,7 @@ const AC={dem:'#2563A8',rep:'#B8311F',npp:'#4A7C4E'};
 const RACES=[
   {id:'gov',name:'Governor',type:'statewide',desc:'Statewide · All California voters',
    expl:'The Governor is California\'s chief executive who signs or vetoes laws, controls the state budget, commands the National Guard, and appoints judges and cabinet members.',
+   otherCandidates:[{name:'Delaine Eastin'},{name:'Luis Rodriguez'},{name:'Peter Liu'}],
    candidates:[
     {id:'gov-steyer',name:'Tom Steyer',party:'dem',role:'Hedge fund manager & climate activist',av:'TS',stances:['Expand healthcare toward single-payer system','Aggressive climate action: net zero by 2035','Tax reform targeting top income brackets','Expand affordable housing via state funding'],end:['California Federation of Teachers','Multiple environmental groups','Progressive CA legislators'],ft:'$28M raised',fp:72,td:['Self-funded (personal wealth)','Climate advocacy PACs','Labor unions (SEIU, CTA)'],inc:false},
     {id:'gov-becerra',name:'Xavier Becerra',party:'dem',role:'Former CA AG & U.S. Sec. of Health',av:'XB',stances:['Strengthen ACA and push toward universal coverage','Criminal justice reform and police accountability','Immigration protections and DACA expansion','Invest in public education'],end:['California Democratic Party','SEIU California','Multiple county Democratic parties'],ft:'$19M raised',fp:49,td:['Trial lawyers associations','Labor union PACs','Small-dollar donors'],inc:false},
@@ -601,7 +609,7 @@ function switchPage(id,btn){
 // ═══════════════════════════════════════════════════
 const CA_CITIES = [
   'Alameda','Alhambra','Anaheim','Antioch','Apple Valley','Bakersfield','Baldwin Park',
-  'Bellflower','Berkeley','Buena Park','Burbank','Camarillo','Carson','Chico','Chino',
+  'Bellflower','Berkeley','Buena Park','Burbank','Chico','Chino',
   'Chino Hills','Chula Vista','Citrus Heights','Clovis','Compton','Concord','Corona',
   'Costa Mesa','Daly City','Davis','Downey','El Cajon','El Monte','Elk Grove',
   'Escondido','Fairfield','Fontana','Fremont','Fresno','Fullerton','Garden Grove',
@@ -719,39 +727,51 @@ async function lookupAddress(){
 }
 
 async function lookupWithCensus(addr){
-  // Census geocoder using JSONP - their official browser-compatible method
-  // JSONP bypasses CORS entirely since it uses a script tag instead of fetch
-  return new Promise((resolve)=>{
-    const callbackName = 'censusCallback_' + Date.now();
-    const script = document.createElement('script');
-    const cleanAddr = (addr.toLowerCase().includes(', ca') ? addr : addr + ', CA')
-      .replace(/,+/g, ',').trim();
+  // Census geocoder via JSONP (bypasses CORS, no API key needed).
+  // Single call to Public_AR_Current benchmark which contains:
+  //   - 119th Congressional Districts
+  //   - 2024 State Legislative Districts - Upper (Senate)
+  //   - 2024 State Legislative Districts - Lower (Assembly)
+  const cleanAddr = (addr.toLowerCase().includes(', ca') ? addr : addr + ', CA')
+    .replace(/,+/g, ',').trim();
 
-    window[callbackName] = function(data){
-      // Clean up
-      delete window[callbackName];
-      document.head.removeChild(script);
+  return new Promise((resolve)=>{
+    const cb = 'cb_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
+    const script = document.createElement('script');
+    window[cb] = function(data){
+      delete window[cb];
+      try{document.head.removeChild(script);}catch(e){}
       try{
         const matches = data?.result?.addressMatches;
         if(!matches?.length){ resolve(null); return; }
         const geo = matches[0].geographies;
-        const cdG = geo['119th Congressional Districts'] ||
-                    geo['118th Congressional Districts'] ||
-                    geo['Congressional Districts'];
-        const ssG = geo['State Legislative Districts - Upper'];
-        const saG = geo['State Legislative Districts - Lower'];
+
+        // Congressional district
+        const cdG = geo['119th Congressional Districts']
+                 || geo['118th Congressional Districts']
+                 || geo['Congressional Districts'];
+
+        // State Senate - layer name changed to "2024 State Legislative Districts - Upper"
+        const ssG = geo['2024 State Legislative Districts - Upper']
+                 || geo['State Legislative Districts - Upper'];
+
+        // State Assembly - layer name changed to "2024 State Legislative Districts - Lower"
+        const saG = geo['2024 State Legislative Districts - Lower']
+                 || geo['State Legislative Districts - Lower'];
+
         const congressional = cdG?.[0] ? String(parseInt(cdG[0].BASENAME||cdG[0].NAME)) : null;
         const senate        = ssG?.[0] ? String(parseInt(ssG[0].BASENAME||ssG[0].NAME)) : null;
         const assembly      = saG?.[0] ? String(parseInt(saG[0].BASENAME||saG[0].NAME)) : null;
+
         if(!congressional && !senate && !assembly){ resolve(null); return; }
         resolve({congressional, senate, assembly});
       }catch(e){ resolve(null); }
     };
-
-    script.onerror = ()=>{ delete window[callbackName]; document.head.removeChild(script); resolve(null); };
-    script.src = `https://geocoding.geo.census.gov/geocoder/geographies/onelineaddress?address=${encodeURIComponent(cleanAddr)}&benchmark=Public_AR_Current&vintage=Current_Current&layers=all&format=jsonp&callback=${callbackName}`;
-    // Timeout after 8 seconds
-    setTimeout(()=>{ if(window[callbackName]){ delete window[callbackName]; try{document.head.removeChild(script);}catch(e){} resolve(null); } }, 8000);
+    script.onerror = ()=>{ delete window[cb]; try{document.head.removeChild(script);}catch(e){} resolve(null); };
+    const enc = encodeURIComponent(cleanAddr);
+    script.src = 'https://geocoding.geo.census.gov/geocoder/geographies/onelineaddress?address='
+      + enc + '&benchmark=Public_AR_Current&vintage=Current_Current&layers=all&format=jsonp&callback=' + cb;
+    setTimeout(()=>{ if(window[cb]){ delete window[cb]; try{document.head.removeChild(script);}catch(e){} resolve(null); }}, 9000);
     document.head.appendChild(script);
   });
 }
@@ -802,9 +822,9 @@ function renderBallot(){
     </div>` : '';
   document.getElementById('summaryStats').innerHTML=`
     <div class="ballot-stat"><span class="stat-label">Total elections</span><span class="stat-val">${totalR}</span></div>
-    <div class="ballot-stat"><span class="stat-label">Candidates</span><span class="stat-val">${totalC}</span></div>
+    <div class="ballot-stat"><span class="stat-label">Total candidates</span><span class="stat-val">${totalC}</span></div>
     <div class="ballot-stat"><span class="stat-label">Statewide offices</span><span class="stat-val">${swRaces.length}</span></div>
-    <div class="ballot-stat"><span class="stat-label">District races</span><span class="stat-val">${distRaces.length} found</span></div>
+    <div class="ballot-stat"><span class="stat-label">District races</span><span class="stat-val">${[myDist.congressional,myDist.senate,myDist.assembly].filter(Boolean).length} found</span></div>
     <div class="ballot-stat"><span class="stat-label">Starred</span><span class="stat-val" id="starCountBadge">${starred.size>0?starred.size+' starred':'None yet'}</span></div>
     ${distNumsHTML}`;
   document.getElementById('summaryActions').style.display='block';
@@ -835,11 +855,11 @@ function renderBallot(){
     <div class="picks-print-note ${starred.size>0?'has-picks':''}" id="picksPrintNote">
       ⭐ Your starred picks: ${getPicksSummary()}
     </div>
-    <div style="font-size:0.69rem;color:var(--muted);margin-bottom:0.75rem;padding:5px 0;border-bottom:1px solid var(--border)">
+    <div class="no-print" style="font-size:0.69rem;color:var(--muted);margin-bottom:0.75rem;padding:5px 0;border-bottom:1px solid var(--border)">
       ★ Star any candidate to save your pick. Saved in this browser only. Use "Share my picks" to send your ballot to others.
     </div>
     ${quickNavHTML}
-    <div style="margin-bottom:0.85rem;position:relative">
+    <div class="no-print" style="margin-bottom:0.85rem;position:relative">
       <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--muted)">🔍</span>
       <input id="ballotSearch" type="text" placeholder="Search candidates on your ballot…" oninput="searchBallot()" style="width:100%;padding:7px 10px 7px 30px;font-size:0.8rem;border:1px solid var(--border);border-radius:5px;font-family:'DM Sans',sans-serif;color:var(--text)">
     </div>
@@ -853,10 +873,15 @@ function renderBallot(){
 
 function buildRaceBlock(race,distNum){
   const cands=distNum?race.candidates[distNum]:race.candidates;
+  const others=race.otherCandidates||(distNum&&race.otherCandidatesByDistrict?.[distNum])||[];
   const distLabel=distNum?` (${race.districtLabel} ${distNum})`:'';
   const scope=distNum?`📍 District ${distNum}`:'🌎 All voters';
   const multi=cands.length>1;
   const anchorId=`section-${race.id}${distNum?'-'+distNum:''}`;
+  const othersHTML=others.length?`<div class="other-candidates">
+    <strong>Also on the ballot</strong>
+    ${others.map(o=>`<span>${o.name}${o.party?' ('+o.party+')':''}</span>`).join('')}
+  </div>`:'';
   return`<div class="section-block" id="${anchorId}">
     <div class="section-hdr">
       <h3>${race.name}${distLabel}</h3>
@@ -864,6 +889,7 @@ function buildRaceBlock(race,distNum){
       <span class="section-scope">${scope}</span>
     </div>
     <div class="candidates-grid ${multi?'multi':'single'}">${cands.map(c=>buildCardHTML(c)).join('')}</div>
+    ${othersHTML}
   </div>`;
 }
 
@@ -1102,10 +1128,17 @@ function selectBrowseRace(id){
   const race=RACES.find(r=>r.id===id);
   if(!race)return;
   const isDistrict=race.type==='district';
-  document.getElementById('browseFilterBar').style.display=isDistrict?'flex':'none';
+  // Always show the filter bar (search is always available)
+  // Only show district filter label + tabs for district races
+  const lbl=document.getElementById('distFilterLabel');
+  const tabs=document.getElementById('filterTabs');
+  if(lbl) lbl.style.display=isDistrict?'':'none';
+  if(tabs) tabs.style.display=isDistrict?'':'none';
+  // Clear search on race change
+  const srch=document.getElementById('browseSearch');
+  if(srch) srch.value='';
   renderBrowse(race);
-  // Scroll to top of browse body
-  document.getElementById('browseBody').scrollTop=0;
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
 function renderBrowse(race){
@@ -1175,11 +1208,40 @@ function updatePrintPicks(){
 
 function searchBallot(){
   const q=document.getElementById('ballotSearch')?.value.toLowerCase()||'';
-  document.querySelectorAll('#ballotContent .candidate-card').forEach(card=>{
-    const name=card.querySelector('.cname')?.textContent.toLowerCase()||'';
-    const role=card.querySelector('.crole')?.textContent.toLowerCase()||'';
-    card.style.display=(!q||name.includes(q)||role.includes(q))?'':'none';
+  // If no query, show everything
+  if(!q){
+    document.querySelectorAll('#ballotContent .section-block').forEach(s=>s.style.display='');
+    document.querySelectorAll('#ballotContent .candidate-card').forEach(c=>c.style.display='');
+    const nm=document.getElementById('ballotNoResults');
+    if(nm) nm.style.display='none';
+    return;
+  }
+  let anyVisible=false;
+  // For each race section, check if any candidate matches - hide whole section if none do
+  document.querySelectorAll('#ballotContent .section-block').forEach(section=>{
+    const cards=section.querySelectorAll('.candidate-card');
+    let sectionHasMatch=false;
+    cards.forEach(card=>{
+      const name=card.querySelector('.cname')?.textContent.toLowerCase()||'';
+      const role=card.querySelector('.crole')?.textContent.toLowerCase()||'';
+      const matches=name.includes(q)||role.includes(q);
+      card.style.display=matches?'':'none';
+      if(matches) sectionHasMatch=true;
+    });
+    // Hide the entire section block (including office header) if no candidates match
+    section.style.display=sectionHasMatch?'':'none';
+    if(sectionHasMatch) anyVisible=true;
   });
+  // Show a no-results message if nothing matched
+  let nm=document.getElementById('ballotNoResults');
+  if(!nm){
+    nm=document.createElement('div');
+    nm.id='ballotNoResults';
+    nm.style.cssText='padding:1rem;font-size:0.82rem;color:var(--muted);text-align:center';
+    nm.textContent='No candidates found matching your search.';
+    document.getElementById('ballotContent').appendChild(nm);
+  }
+  nm.style.display=anyVisible?'none':'block';
 }
 
 function searchBrowse(){
@@ -1197,13 +1259,20 @@ window.addEventListener('scroll',()=>{
   document.getElementById('backToTop').classList.toggle('show',window.scrollY>400);
 });
 function scrollToTop(){
-  // Scroll to the quicknav jump bar, not the very top of the page
-  const qnav=document.getElementById('ballotQuicknav');
-  if(qnav){
-    const top=qnav.getBoundingClientRect().top+window.scrollY-120;
-    window.scrollTo({top,behavior:'smooth'});
-  } else {
+  // On My Ballot page: scroll to the quicknav jump bar
+  // On Browse page: scroll to actual top of page
+  const browsePage = document.getElementById('page-browse');
+  const browseActive = browsePage && browsePage.classList.contains('active');
+  if(browseActive){
     window.scrollTo({top:0,behavior:'smooth'});
+  } else {
+    const qnav=document.getElementById('ballotQuicknav');
+    if(qnav){
+      const top=qnav.getBoundingClientRect().top+window.scrollY-120;
+      window.scrollTo({top,behavior:'smooth'});
+    } else {
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
   }
 }
 
