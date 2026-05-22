@@ -62,43 +62,51 @@ html,body{font-family:'DM Sans',sans-serif;background:#F0F2F7;color:var(--text);
 .addr-suggestion strong{color:var(--navy);font-weight:500}
 
 /* ── HOW TO USE SECTION ── */
-.howto-bar{background:var(--navy);color:#fff;padding:0;border-bottom:3px solid var(--gold)}
-.howto-inner{max-width:960px;margin:0 auto;padding:1.5rem 1.5rem 1.75rem}
-.howto-date-row{display:flex;align-items:center;gap:12px;margin-bottom:1.1rem;flex-wrap:wrap}
+/* ── HOW TO USE SECTION ── */
+.howto-bar{background:var(--navy);color:#fff;padding:0;border-bottom:3px solid var(--gold);margin-bottom:18px;position:relative;z-index:250}
+.howto-inner{max-width:960px;margin:0 auto;padding:0 1.5rem}
+.howto-collapsed-strip{
+  display:flex;align-items:center;justify-content:center;
+  padding:0.6rem 0 1.3rem;cursor:pointer;user-select:none;
+}
+.howto-collapsed-label{font-size:0.75rem;color:rgba(255,255,255,0.6);letter-spacing:0.06em;text-align:center}
+.howto-toggle-btn{
+  background:var(--navy);border:2px solid var(--gold);
+  color:var(--gold);border-radius:30%;width:28px;height:28px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.3rem;line-height:1;cursor:pointer;flex-shrink:0;
+  font-family:'DM Sans',sans-serif;transition:background 0.15s;
+  position:relative;top:-15px;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,0.2)
+}
+.howto-toggle-btn:hover{background:var(--navy-mid)}
+.howto-expandable{padding-bottom:1.5rem}
+.howto-date-row{display:flex;align-items:center;gap:12px;padding:1.1rem 0 1rem;flex-wrap:wrap}
 .howto-date{font-family:'Playfair Display',serif;font-size:1.75rem;font-weight:600;color:var(--gold);letter-spacing:-0.01em;line-height:1.1}
 .howto-date-sub{font-size:0.72rem;color:rgba(255,255,255,0.55);letter-spacing:0.08em;text-transform:uppercase;margin-top:3px}
 .howto-vote-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;background:var(--gold);color:var(--navy);border:none;border-radius:5px;font-size:0.75rem;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;text-decoration:none;white-space:nowrap;transition:background 0.15s;margin-left:auto}
 .howto-vote-btn:hover{background:var(--gold-light)}
-.howto-grid{display:grid;gap:0.65rem;margin-bottom:1.25rem;grid-template-columns: 1fr;}
+.howto-grid{display:grid;gap:0.65rem;margin-bottom:1rem;grid-template-columns:1fr}
 .howto-step{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:0.7rem 0.85rem;display:flex;gap:10px;align-items:flex-start}
 .howto-step-num{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--gold);font-weight:600;line-height:1;flex-shrink:0;min-width:18px}
 .howto-step-text{font-size:0.75rem;color:rgba(255,255,255,0.85);line-height:1.45}
-.howto-step-text strong{font-family:'Playfair Display',serif;color:var(--gold);margin-bottom:1px;font-size:0.82rem;font-weight:bold;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;}
-  .howto-step-text b{color:rgba(255,255,255,0.85);margin-bottom:1px;font-size:0.75rem;font-weight:bold;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;}
-  .howto-step-text a{color:var(--gold-light);text-decoration:none}
-  .howto-step-text a:hover{text-decoration:underline}
-.howto-legend{display:flex;flex-wrap:wrap;gap:0.5rem 1.25rem;margin-bottom:1.1rem;align-items:center}
-.howto-legend-label{font-size:0.65rem;font-weight:500;letter-spacing:0.09em;text-transform:uppercase;color:rgba(255,255,255,0.45);margin-right:2px}
-.howto-legend-item{display:flex;align-items:center;gap:5px;font-size:0.71rem;color:rgba(255,255,255,0.75)}
-.howto-legend-swatch{width:10px;height:10px;border-radius:2px;flex-shrink:0}
-.howto-sources{border-top:1px solid rgba(255,255,255,0.1);padding-top:0.85rem;font-size:0.75rem;color:rgba(255,255,255,0.5);line-height:1.7}
-.howto-sources strong{color:rgba(255,255,255,0.7);font-weight:590;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;}
-  .howto-sources b{color:rgba(255,255,255,0.7);font-weight:590;font-size:0.72rem;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;}
-.howto-sources a{color:var(--gold-light);text-decoration:none}
-.howto-sources a:hover{text-decoration:underline}
-@media(max-width:540px){
+.howto-step-text strong{font-family:'Playfair Display',serif;color:var(--gold);font-size:0.82rem;font-weight:bold;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+.howto-step-text a{color:var(--gold-light);text-decoration:none}
+.howto-step-text a:hover{text-decoration:underline}
+.howto-bottom-row{display:grid;grid-template-columns:1fr 1fr;gap:0.65rem;margin-top:0.65rem}
+.howto-info-card{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:0.75rem 0.85rem}
+.howto-info-card.disclaimer{border-left:3px solid var(--gold)}
+.howto-info-title{font-size:0.67rem;font-weight:500;letter-spacing:0.09em;text-transform:uppercase;color:var(--gold);margin-bottom:0.5rem}
+.howto-info-card p,.howto-info-card a{font-size:0.73rem;color:rgba(255,255,255,0.7);line-height:1.65;text-decoration:none}
+.howto-info-card a{color:var(--gold-light);text-decoration:none}
+.howto-info-card a:hover{text-decoration:underline}
+.howto-info-card b{color:rgba(255,255,255,0.85);font-size:0.73rem;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+@media(max-width:640px){
+  .howto-bottom-row{grid-template-columns:1fr}
   .howto-date{font-size:1.35rem}
   .howto-vote-btn{margin-left:0}
   .howto-date-row{gap:8px}
 }
+@media print{.howto-bar{display:none!important}}
 @media print{.howto-bar{display:none!important}}
 header{background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;height:56px;border-bottom:3px solid var(--gold);position:sticky;top:0;z-index:300}
 .brand{display:flex;align-items:baseline;gap:10px}
@@ -133,7 +141,7 @@ header{background:var(--navy);color:#fff;display:flex;align-items:center;justify
   display:flex;
   flex-direction:column;
   width:100%;
-  max-width:520px;
+  max-width:680px;
   margin:0 auto;         /* centers on wide screens */
   overflow:hidden;
 }
@@ -236,7 +244,7 @@ header{background:var(--navy);color:#fff;display:flex;align-items:center;justify
 .section-block{margin-bottom:1.5rem}
 .section-hdr{display:flex;flex-direction:column;gap:4px;margin-bottom:0.65rem}
 .section-hdr h3{font-family:'Playfair Display',serif;font-size:1rem;color:var(--navy);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.section-explainer{font-size:0.73rem;color:var(--muted);line-height:1.5;max-width:680px}
+.section-explainer{font-size:0.75rem;color:var(--muted);line-height:1.5;max-width:680px}
 .section-scope{font-size:0.67rem;padding:2px 8px;border-radius:3px;background:var(--navy-light);color:var(--navy-mid);border:1px solid var(--border);white-space:nowrap;display:inline-block}
 
 /* Candidates grid - 2 columns when multiple candidates */
@@ -279,9 +287,9 @@ header{background:var(--navy);color:#fff;display:flex;align-items:center;justify
 .fbar-track{background:var(--border);border-radius:3px;height:5px}
 .fbar-fill{height:5px;border-radius:3px;background:var(--navy)}
 .dtags{margin-top:5px;display:flex;flex-direction:column;gap:4px}
-.dtag{font-size:0.69rem;background:var(--surface);border:1px solid var(--border);padding:4px 8px;border-radius:4px;color:var(--muted);display:flex;flex-direction:column;gap:1px}
+.dtag{font-size:0.7rem;background:var(--surface);border:1px solid var(--border);padding:4px 8px;border-radius:4px;color:var(--muted);display:flex;flex-direction:column;gap:1px}
 .dtag-name{color:var(--text);font-size:0.72rem}
-.dtag-meta{color:var(--gold);font-size:0.67rem;font-weight:500}
+.dtag-meta{color:var(--gold);font-size:0.7rem;font-weight:500}
 
 /* Starred picks banner (print) */
 .picks-print-note{background:var(--gold-pale);border:1px solid var(--gold-border);border-radius:6px;padding:10px 14px;margin-bottom:1.2rem;font-size:0.78rem;color:var(--navy);display:none}
@@ -321,7 +329,7 @@ header{background:var(--navy);color:#fff;display:flex;align-items:center;justify
 .browse-filter-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:8px 2rem;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .filter-label{font-size:0.72rem;color:var(--muted);white-space:nowrap}
 .filter-tabs{display:flex;gap:4px;flex-wrap:wrap}
-.ftab{font-size:0.71rem;padding:3px 9px;border-radius:4px;background:var(--white);border:1px solid var(--border);color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif}
+.ftab{font-size:0.73rem;padding:3px 9px;border-radius:4px;background:var(--white);border:1px solid var(--border);color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif}
 .ftab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
 .browse-search{margin-left:auto}
 .browse-search input{padding:5px 10px;font-size:0.76rem;border:1px solid var(--border);border-radius:5px;font-family:'DM Sans',sans-serif;color:var(--text);width:180px}
@@ -350,7 +358,7 @@ header{background:var(--navy);color:#fff;display:flex;align-items:center;justify
 #ttip{position:fixed;background:var(--navy);color:#fff;padding:5px 9px;border-radius:4px;font-size:0.7rem;pointer-events:none;display:none;z-index:400;white-space:nowrap}
 
 /* Share modal */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:500;display:none;align-items:center;justify-content:center}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:500;display:none;align-items:center;justify-content:center;overflow:hidden}
 .modal-overlay.show{display:flex}
 .modal{background:var(--white);border-radius:10px;padding:1.5rem;max-width:440px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.18)}
 .modal h3{font-family:'Playfair Display',serif;font-size:1.05rem;color:var(--navy);margin-bottom:4px}
@@ -393,57 +401,71 @@ header{background:var(--navy);color:#fff;display:flex;align-items:center;justify
 <!-- ════════════════════
      HOW TO USE
 ════════════════════ -->
-<div class="howto-bar no-print">
+<div class="howto-bar no-print" id="howtoBar">
   <div class="howto-inner">
 
-    <div class="howto-date-row">
-      <div>
-        <div class="howto-date">June 2, 2026 &middot; California Primary</div>
-        <div class="howto-date-sub">Statewide primary election &middot; Top-two advance to November</div>
-      </div>
-      <a class="howto-vote-btn" href="https://voterstatus.sos.ca.gov/" target="_blank" rel="noopener">🗳 Check your registration &rarr;</a>
+    <!-- Collapsed strip - always visible, clicking toggles the guide -->
+    <div class="howto-collapsed-strip" onclick="toggleHowto()">
+      <span class="howto-collapsed-label">ℹ️ How to use this guide · Sources · Disclaimer</span>
     </div>
 
-    <div class="howto-grid">
-      <div class="howto-step">
-        <div class="howto-step-num">1</div>
-        <div class="howto-step-text"><strong>Enter your address: </strong>Use your registered voter address in the format shown. This guide estimates your districts using the U.S. Census Bureau geocoder. <b>District boundaries may not reflect final adopted lines. 
-          Verify yours at <a href="https://wedrawthelines.ca.gov/final-maps/" target="_blank" rel="noopener">We Draw the Lines California</a></b></div>
-      </div>
-      <div class="howto-step">
-        <div class="howto-step-num">2</div>
-        <div class="howto-step-text"><strong>See your races: </strong>Only the elections likely on your ballot appear, from Governor down to your Assembly district.</div>
-      </div>
-      <div class="howto-step">
-        <div class="howto-step-num">3</div>
-        <div class="howto-step-text"><strong>Review candidates: </strong>Full cards show leading candidates with stances, endorsements, and top donors based on available public data. Other candidates are listed in the roster below each race. 
-          <b>Information may be incomplete or not reflect a candidate's full record. Always consult primary sources before deciding.</b></div>
-      </div>
-      <div class="howto-step">
-        <div class="howto-step-num">4</div>
-        <div class="howto-step-text"><strong>Star your picks: </strong>Tap the ★ on any candidate to save your choice. Stars are stored in your browser only and never sent anywhere.</div>
-      </div>
-      <div class="howto-step">
-        <div class="howto-step-num">5</div>
-        <div class="howto-step-text"><strong>Print or share: </strong>Use "Print ballot summary" for a clean printout to take to the polls, or "Share my picks" to send your selections to others via a link or image.</div>
-      </div>
-    </div>
+    <!-- Expandable content -->
+    <div class="howto-expandable" id="howtoExpandable">
 
-    <div class="howto-sources">
-      <strong>Sources used throughout this guide:</strong>
-      <a href="https://www.sos.ca.gov/elections" target="_blank" rel="noopener">California Secretary of State</a> (official candidate list and district maps) &middot;
-      <a href="https://calmatters.org/california-voter-guide-2026/" target="_blank" rel="noopener">CalMatters 2026 Voter Guide</a> (nonpartisan candidate coverage) &middot;
-      <a href="https://www.transparencyusa.org/" target="_blank" rel="noopener">TransparencyUSA</a> (campaign finance data, may not contain recent filings) &middot;
-      Candidate campaign websites (linked on each card) &middot; District lookup via U.S. Census Bureau geocoder.
-      <br><b>⚠️Note: Not affiliated with the California Secretary of State or any government agency. This guide does not endorse any candidate, party, or measure. 
-        Data in this guide is drawn from public sources and may contain errors, be incomplete, outdated, or subject to change. 
-        Candidate information does not represent the entirety of a candidate's record, positions, or qualifications. 
-        Verify all information independently before making voting decisions. 
-      Your actual ballot may differ. Ballot contents are determined by your county elections office. You cannot cast a vote with this tool.</b>
-    </div>
+      <div class="howto-date-row">
+        <div>
+          <div class="howto-date">June 2, 2026 &middot; California Primary</div>
+          <div class="howto-date-sub">Statewide primary election &middot; Top-two advance to November</div>
+        </div>
+        <a class="howto-vote-btn" href="https://voterstatus.sos.ca.gov/" target="_blank" rel="noopener">🗳 Check your registration &rarr;</a>
+      </div>
 
+      <div class="howto-grid">
+        <div class="howto-step">
+          <div class="howto-step-num">1</div>
+          <div class="howto-step-text"><strong>Enter your address:</strong> Use your registered voter address to see your specific races.</div>
+        </div>
+        <div class="howto-step">
+          <div class="howto-step-num">2</div>
+          <div class="howto-step-text"><strong>See your races:</strong> Elections from Governor down to your Assembly district appear automatically.</div>
+        </div>
+        <div class="howto-step">
+          <div class="howto-step-num">3</div>
+          <div class="howto-step-text"><strong>Review candidates:</strong> Leading candidates show stances, endorsements, and donor info. A full roster appears below each race.</div>
+        </div>
+        <div class="howto-step">
+          <div class="howto-step-num">4</div>
+          <div class="howto-step-text"><strong>Star your picks ★:</strong> Tap the ★ on any candidate to save your choice. Stored in your browser only.</div>
+        </div>
+        <div class="howto-step">
+          <div class="howto-step-num">5</div>
+          <div class="howto-step-text"><strong>Print or share:</strong> Print a clean summary to take to the polls, or share your picks via link or image.</div>
+        </div>
+      </div>
+
+      <div class="howto-bottom-row">
+        <div class="howto-info-card">
+          <div class="howto-info-title">📄 Sources</div>
+          <p>
+            <a href="https://www.sos.ca.gov/elections" target="_blank" rel="noopener">California Secretary of State</a> (official candidate list and district maps) 
+            <br><a href="https://calmatters.org/california-voter-guide-2026/" target="_blank" rel="noopener">CalMatters 2026 Voter Guide</a> (nonpartisan candidate coverage) 
+            <br><a href="https://www.transparencyusa.org/" target="_blank" rel="noopener">TransparencyUSA</a> (campaign finance data, may not contain recent filings) 
+            <br><a href="https://geocoding.geo.census.gov/geocoder/" target="_blank" rel="noopener">U.S. Census Bureau geocoder</a> (address-to-district lookup) 
+            <br>Candidate campaign websites (linked on full cards) 
+          </p>
+        </div>
+        <div class="howto-info-card disclaimer">
+          <div class="howto-info-title">⚠️ Disclaimer</div>
+          <p>Not affiliated with any government agency. No editorial endorsement is implied. Data is from public sources and may be incomplete, outdated, or contain errors. Candidate data does not reflect a full record. Your actual ballot is determined by your county elections office. <b>Verify all information independently before voting. You cannot cast a vote with this tool.</b></p>
+        </div>
+      </div>
+
+    </div><!-- /howto-expandable -->
+  </div><!-- /howto-inner -->
+<div style="display:flex;justify-content:center;position:relative;height:0">
+    <button class="howto-toggle-btn" id="howtoToggleBtn" aria-label="Toggle guide" onclick="toggleHowto()">−</button>
   </div>
-</div>
+</div><!-- /howto-bar -->
 
 <!-- ════════════════════
      MY BALLOT PAGE
@@ -455,7 +477,7 @@ header{background:var(--navy);color:#fff;display:flex;align-items:center;justify
 
     <div class="hero-addr">
       <h2>Find my ballot</h2>
-      <p class="sub">Enter the California address where you are registered to vote, follow the format below. 
+      <p class="sub">Enter the California address where you are registered to vote. 
         <br><b>Note:</b> Your district assignment is estimated. Verify yours at <a href="https://wedrawthelines.ca.gov/final-maps/" target="_blank" rel="noopener">We Draw the Lines California</a></p>
       <div class="addr-row" style="position:relative">
         <div style="flex:1;position:relative;min-width:0">
@@ -549,13 +571,13 @@ header{background:var(--navy);color:#fff;display:flex;align-items:center;justify
 
 <!-- Card Image Modal -->
 <div class="modal-overlay" id="cardModalOverlay" onclick="if(event.target===this)closeCardModal()" style="z-index:510">
-  <div class="modal" style="max-width:760px;width:96%;padding:1.25rem">
+  <div class="modal" style="max-width:760px;width:96%;padding:1.25rem;max-height:70vh;overflow-y:auto;display:flex;flex-direction:column">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
       <h3 style="font-family:'Playfair Display',serif;font-size:1rem;color:var(--navy)">Your Shareable Ballot Card</h3>
       <button onclick="closeCardModal()" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:1.3rem;line-height:1">×</button>
     </div>
-    <p style="font-size:0.73rem;color:var(--muted);margin-bottom:10px;line-height:1.5">Download and post to Instagram, X, or anywhere you like.</p>
-    <canvas id="shareCard" style="border-radius:10px;max-width:100%;display:block;box-shadow:0 4px 24px rgba(0,0,0,0.13)"></canvas>
+    <p style="font-size:0.73rem;color:var(--muted);margin-bottom:10px;line-height:1.5">Download and post to social media or anywhere you like.</p>
+    <canvas id="shareCard" style="border-radius:10px;max-width:100%;max-height:55vh;object-fit:contain;display:block;box-shadow:0 4px 24px rgba(0,0,0,0.13)"></canvas>
     <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
       <button onclick="dlCard()" style="flex:1;min-width:130px;padding:9px 12px;background:var(--navy);color:#fff;border:none;border-radius:5px;font-size:0.76rem;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif">⬇ Download Image</button>
       <button onclick="cpCard()" id="cpCardBtn" style="flex:1;min-width:130px;padding:9px 12px;background:var(--gold-pale);color:var(--navy);border:1px solid var(--gold-border);border-radius:5px;font-size:0.76rem;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif">⎘ Copy Image</button>
@@ -3975,7 +3997,7 @@ function renderBallot(){
     <div class="print-picks" id="printPicksBlock">
       <div class="print-picks-title">My Ballot Picks · California 2026 Primary</div>
       <div id="printPicksList"></div>
-      <div style="font-size:0.7rem;color:var(--muted);margin-top:12px">Printed from California Voter Guide 2026. You cannot cast a vote with this tool.</div>
+      <div style="font-size:0.7rem;color:var(--muted);margin-top:12px">Printed from California Voter Guide 2026.</div>
     </div>
     <div class="picks-print-note ${starred.size>0?'has-picks':''}" id="picksPrintNote">
       ⭐ Your starred picks: ${getPicksSummary()}
@@ -4507,9 +4529,12 @@ const _BI = new Image(); _BI.src = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUg
 function openCardModal() {
   closeModal();
   document.getElementById('cardModalOverlay').classList.add('show');
+   document.body.style.overflow = 'hidden';
   setTimeout(drawShareCard, 80);
 }
-function closeCardModal() { document.getElementById('cardModalOverlay').classList.remove('show'); }
+function closeCardModal() { document.getElementById('cardModalOverlay').classList.remove('show'); 
+  document.body.style.overflow = '';
+}
  
 // Edge lookup from CA state PNG pixels
 const CA_EDGES = [
@@ -4572,9 +4597,10 @@ function drawShareCard() {
   const MAP_Y = HDR + Math.round((mapAreaH - MAP_H) / 2) + 8;
   const mapCenterY = MAP_Y + MAP_H / 2;
  
-  const ROW_H = 50;
+ 
   const n = picksArr.length;
   const rows = Math.ceil(Math.max(n, 1) / 2);
+   const ROW_H = rows <= 1 ? 50 : Math.min(50, (MAP_H * 0.92) / (rows - 1));
   const rowStartY = mapCenterY - ((rows - 1) * ROW_H) / 2;
  
   const cv = document.getElementById('shareCard');
@@ -4766,7 +4792,7 @@ function drawShareCard() {
   ctx.fillStyle = GOLD;
   ctx.font = 'bold 11px "Space Grotesk", sans-serif';
   ctx.letterSpacing = '0.3px';
-  ctx.fillText('cavote26.pages.dev', W / 2, footMid + 10);
+  ctx.fillText('cavote.pages.dev', W / 2, footMid + 10);
   ctx.letterSpacing = '0px';
 }
  
@@ -4793,12 +4819,40 @@ async function cpCard() {
 <footer class="site-footer no-print">
   <span>California Voter Guide 2026 &middot; Independent, nonpartisan, open source</span>
   <span class="site-footer-divider">|</span>
-  <span>Made by <a href="mailto:luvneetk@berkeley.edu">Luvneet Kahlon</a></span>
+  <span>Made by <a>Luvneet Kahlon</a></span>
   <span class="site-footer-divider">|</span>
   <a href="https://github.com/Luvzzzoid/ca-voter-guide-2026" target="_blank" rel="noopener">GitHub</a>
   <span class="site-footer-divider">|</span>
-  <a href="mailto:luvneetk@berkeley.edu">luvneetk@berkeley.edu</a>
+  <a href="mailto:luvneetk@berkeley.edu">Email</a></span>
 </footer>
+
+<script>
+// ── HOW-TO GUIDE TOGGLE ──
+(function(){
+  var STORAGE_KEY = 'howto_collapsed';
+  var expandable = document.getElementById('howtoExpandable');
+  var btn = document.getElementById('howtoToggleBtn');
+
+  // On first visit the guide is open; after they collapse it, remember that
+  if(localStorage.getItem(STORAGE_KEY) === '1'){
+    expandable.style.display = 'none';
+    btn.textContent = '+';
+  }
+
+  window.toggleHowto = function(){
+    var isOpen = expandable.style.display !== 'none';
+    if(isOpen){
+      expandable.style.display = 'none';
+      btn.textContent = '+';
+      localStorage.setItem(STORAGE_KEY, '1');
+    } else {
+      expandable.style.display = '';
+      btn.textContent = '−';
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  };
+})();
+</script>
 
 </body>
 </html>

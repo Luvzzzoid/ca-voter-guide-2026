@@ -2,7 +2,9 @@
 
 An interactive, nonpartisan voter guide for California's June 2, 2026 primary election. Enter your address, see the elections likely on your ballot based on estimated district data, review consolidated candidate profiles covering policy stances, endorsements, and funding sources, save your favorites, and share your picks - all in one place, with no account or app required.
 
-**Live:** [luvzzzoid.github.io/ca-voter-guide-2026](https://luvzzzoid.github.io/ca-voter-guide-2026)
+**Live:** 
+- Cloudflare: [cavote.pages.dev](https://cavote.pages.dev/)
+- GitHub Pages: [luvzzzoid.github.io/ca-voter-guide-2026](https://luvzzzoid.github.io/ca-voter-guide-2026)
 
 ---
 
@@ -35,8 +37,8 @@ Candidate and election data in this guide is drawn from publicly available sourc
 - [California Secretary of State](https://www.sos.ca.gov/elections) - official candidate filings and district maps
 - [CalMatters 2026 Voter Guide](https://calmatters.org/california-voter-guide-2026/) - nonpartisan candidate coverage
 - [TransparencyUSA](https://www.transparencyusa.org/) - campaign finance data (may not reflect the most recent filings)
-- Candidate official campaign websites (linked on each card)
 - [U.S. Census Bureau Geocoding API](https://geocoding.geo.census.gov/geocoder/) - address-to-district lookup
+- Candidate official campaign websites (linked on each card)
 
 No editorial stance is taken on any candidate.
 
@@ -69,6 +71,24 @@ Verify all information independently before making voting decisions.
 ## Contributing
 
 This is an independent civic project with no commercial interest. If you have candidate data corrections, design suggestions, or want to contribute, open an issue or pull request on GitHub. You can also reach out via [Email](mailto:luvneetk@berkeley.edu).
+
+---
+
+## Embed this guide
+
+Anyone can embed this guide on their website using a standard iframe.
+
+```
+<iframe 
+  src="https://cavote.pages.dev/"
+  width="100%" 
+  height="800px" 
+  frameborder="0"
+  title="California Voter Guide 2026">
+</iframe>
+```
+
+The guide is fully self-contained and runs client-side. No data is collected from your visitors. If you embed it, attribution is appreciated but not required under the MIT license.
 
 ---
 
