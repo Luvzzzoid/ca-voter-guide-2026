@@ -64,7 +64,7 @@ Verify all information independently before making voting decisions.
 - HTML, CSS, and JavaScript
 - [D3.js](https://d3js.org/) for the district map
 - U.S. Census Bureau [Geocoding API](https://geocoding.geo.census.gov/geocoder/) for address-to-district lookup, using JSONP to support browser-based requests without a backend
-- GitHub Pages for hosting
+- GitHub Pages and Cloudflare for hosting
 
 ---
 
@@ -88,7 +88,7 @@ Anyone can embed this guide on their website using a standard iframe.
 </iframe>
 ```
 
-The guide is fully self-contained and runs client-side. No data is collected from your visitors. If you embed it, attribution is appreciated but not required under the MIT license.
+The guide is fully self-contained and runs client-side. No data is collected from your visitors. 
 
 ---
 
